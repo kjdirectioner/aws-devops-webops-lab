@@ -1,7 +1,7 @@
 ---
 - name: Deploy Nginx in EC2
   hosts: web-servers
-  become: yes
+  become: true
   tasks:
     - name: Install nginx for Debian
       apt:
