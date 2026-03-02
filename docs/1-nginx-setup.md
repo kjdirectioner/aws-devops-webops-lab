@@ -56,9 +56,11 @@ nginx-aws-project/
 ### 2️⃣ Connect via SSH
 Use your key to connect securely:
 ```bash
-ssh -i ~/Downloads/MY_Key.pem ubuntu@<Your-Public-IP>
+ssh -i ~/.ssh/<your-key>.pem ubuntu@<your-public-ip>
+```
+
 ### 3. Update, Install & Start Nginx
-Run the following commands to install,start and enable Nginx:
+Run the following commands to install, start, and enable Nginx:
 ```bash
 sudo apt update 
 sudo apt install nginx  

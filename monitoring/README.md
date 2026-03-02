@@ -46,6 +46,10 @@ nginx-aws-project/
 
 ---
 
+
+> **Live demo note:** In my actual AWS environment, I used a real private target IP during the run.
+> This repo uses placeholders so others can reproduce safely with their own infra values.
+
 ## 🧩 Key Configuration
 
 ### 🔹 Prometheus Scrape Targets 
@@ -58,7 +62,7 @@ This project uses a minimal version of the default config with a custom node_exp
 - job_name: "node_exporter"
   scrape_interval: 10s
   static_configs:
-    - targets: ["localhost:9100", "10.0.134.125:9100"]
+    - targets: ["localhost:9100", "<redhat-private-ip>:9100"]
 ```
 
 ### 🔹 Grafana Setup
@@ -77,7 +81,7 @@ _Instance selector dropdown showing both Debian & Red Hat instances._
 
 🎯 **Prometheus Targets UP**  
 ![Prometheus Targets UP](./grafana/screenshots/prometheus-targets-up.png)  
-_Prometheus “Targets” page showing both node_exporter endpoints as UP (localhost:9100 and 10.0.134.125:9100)._
+_Prometheus “Targets” page showing both node_exporter endpoints as UP (localhost:9100 and <redhat-private-ip>:9100)._
 
 
 
