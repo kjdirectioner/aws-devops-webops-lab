@@ -1,110 +1,71 @@
-# 🔧 Ansible Automation — Nginx + Monitoring Stack
+# 🔧 Ansible Automation — Nginx + Monitoring
 
-This folder contains automation for:
-1. **Nginx deployment** on Debian + Red Hat EC2 instances
-2. **Monitoring stack deployment** using Node Exporter, Prometheus, and Grafana
+This folder shows the automation phase of the project: turning a manually configured Ubuntu EC2 web server into a repeatable Ansible workflow.
 
 ---
 
-## What’s automated
+## 🧩 What This Automates
 
-### 1) Nginx deployment (`playbook.yml`)
-- Installs Nginx on Debian and Red Hat families
-- Copies custom `index.html`
-- Ensures Nginx is enabled and running
-
-### 2) Monitoring stack (`monitoring.yml`)
-- `node_exporter` role: host metrics on target nodes
-- `prometheus` role: scrape and store metrics
-- `grafana` role: visualize metrics
+- Installs and starts **Nginx** on Ubuntu
+- Deploys a custom `index.html` page
+- Installs **Node Exporter** for host metrics
+- Deploys **Prometheus** and **Grafana** for monitoring
+- Supports both manual and Terraform-generated inventory
 
 ---
 
-## Project structure
+## 🗂️ Key Files
+
+| File | Purpose |
+|------|---------|
+| `playbook.yml` | Deploys Nginx to the `web_servers` group |
+| `monitoring.yml` | Deploys Node Exporter, Prometheus, and Grafana |
+| `inventory.example.ini` | Safe inventory template for manual runs |
+| `inventory.generated.ini` | Terraform-generated inventory, ignored by git |
+| `roles/` | Ubuntu-focused Ansible roles |
+
+---
+
+## 🔁 How It Fits The Project
+
+This phase comes after the manual EC2 setup.
 
 ```text
-ansible-project/
-├── inventory.ini
-├── playbook.yml
-├── monitoring.yml
-├── roles/
-│   ├── node_exporter/
-│   ├── prometheus/
-│   └── grafana/
-├── index.html
-└── screenshots/
+Manual EC2 setup
+  -> Ansible automation
+  -> Monitoring
+  -> Terraform import + generated inventory
 ```
 
----
-
-## Prerequisites
-
-- Ansible (`ansible-core`) installed on control machine
-- SSH reachability to both EC2 hosts
-- Key-based auth configured
-- Security groups allow:
-  - `22` (SSH)
-  - `9100` (Node Exporter)
-  - `9090` (Prometheus)
-  - `3000` (Grafana access via tunnel/preferred restricted access)
+The goal is to show that the server can be rebuilt or updated consistently instead of configured by hand every time.
 
 ---
 
-## Inventory
+## ⚙️ Run Commands
 
-Use `inventory.example.ini` as a template and keep your real `inventory.ini` local (not committed).
+Manual inventory:
 
-Example shape:
-
-```ini
-[web-servers]
-<debian_host_or_ip> ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/<debian_key>.pem
-<rhel_host_or_ip>   ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/<redhat_key>.pem
-```
-
----
-
-## Run commands
-
-### Deploy Nginx
 ```bash
-cp inventory.example.ini inventory.ini
 ansible-playbook -i inventory.ini playbook.yml
-```
-
-### Deploy monitoring stack
-```bash
 ansible-playbook -i inventory.ini monitoring.yml
 ```
 
----
+Terraform-generated inventory:
 
-## Validation checklist
-
-After execution:
-
-- `ansible all -i inventory.ini -m ping` passes
-- Nginx is active on both hosts
-- Custom web page is served from both hosts
-- Prometheus targets show `UP`
-- Grafana dashboards populate host metrics
+```bash
+ansible-playbook -i inventory.generated.ini playbook.yml
+ansible-playbook -i inventory.generated.ini monitoring.yml
+```
 
 ---
 
-## Technical notes
+## 📸 Proof
 
-- Prometheus role include is case-corrected to:
-  - `roles/prometheus/tasks/main.yml` → `include_tasks: debian.yml`
-- This avoids Linux case-sensitivity issues during task includes.
+- [Playbook run screenshot](screenshots/Playbook_run.png)
 
 ---
 
-## Proof
+## 📖 Detailed Setup
 
-See `screenshots/` in this folder for:
-- Playbook execution proof
-- Debian and Red Hat webpage/service validation
-
-Monitoring proof is documented in:
-- `../docs/3-monitoring-setup.md`
-- `../monitoring/README.md`
+- [Ansible setup doc](../docs/2-ansible-automation.md)
+- [Monitoring setup doc](../docs/3-monitoring-setup.md)

@@ -1,105 +1,194 @@
-# ☁️ AWS EC2 — Nginx Automation & Monitoring Project
+# ☁️ aws-devops-webops-lab
 
 ![AWS](https://img.shields.io/badge/AWS-EC2-orange?logo=amazonaws)
+![Terraform](https://img.shields.io/badge/IaC-Terraform-5C4EE5?logo=terraform)
 ![Ansible](https://img.shields.io/badge/Automation-Ansible-red?logo=ansible)
 ![Grafana](https://img.shields.io/badge/Monitoring-Grafana-blue?logo=grafana)
 ![Prometheus](https://img.shields.io/badge/Metrics-Prometheus-orange?logo=prometheus)
 
-A hands-on DevOps portfolio project showing progression from **manual deployment** to **automation** and then **observability** on AWS.
+## 🧩 Project Summary
+
+This is a hands-on DevOps portfolio project that shows how I evolved a simple Nginx website on AWS EC2 from a manual deployment into an automated and monitored infrastructure workflow.
+
+The project demonstrates practical experience with Linux administration, Infrastructure as Code, configuration management, and observability using a single Ubuntu EC2 instance.
 
 ---
 
-## What this project demonstrates
+## 🎯 Why This Project Matters
 
-- Manual EC2 + Nginx setup fundamentals
-- Multi-OS Ansible automation (Debian + Red Hat)
-- Monitoring stack with Node Exporter, Prometheus, and Grafana
-- Documentation + screenshots for reproducible proof
+This project reflects the kind of work involved in entry-level DevOps and cloud engineering roles:
 
----
-
-## Project phases
-
-### Phase 1 — Manual Nginx hosting
-- Launch EC2, connect over SSH, install Nginx, deploy custom page
-- Guide: `docs/1-nginx-setup.md`
-
-### Phase 2 — Ansible automation
-- One playbook deploys Nginx across Debian + Red Hat targets
-- Guide: `docs/2-ansible-automation.md`
-- Project folder: `ansible-project/`
-
-### Phase 3 — Monitoring
-- Node Exporter on hosts + Prometheus scrape + Grafana dashboards
-- Guide: `docs/3-monitoring-setup.md`
-- Monitoring docs/config: `monitoring/README.md`, `monitoring/prometheus.yml`
+- provisioning and managing infrastructure
+- automating repeatable server configuration
+- deploying application content reliably
+- adding monitoring and operational visibility
+- documenting the workflow clearly for reproducibility
 
 ---
 
-## Architecture (high-level)
+## ⚙️ Skills Demonstrated
+
+- AWS EC2
+- Ubuntu Linux
+- Nginx
+- Terraform
+- Ansible
+- Prometheus
+- Grafana
+- Infrastructure as Code
+- Configuration Management
+- Monitoring and Observability
+- SSH and Linux Administration
+
+---
+
+## 🔁 Project Evolution
+
+This project progressed in stages:
+
+1. Manual EC2 + Nginx deployment
+2. Ansible-based server automation
+3. Monitoring with Node Exporter, Prometheus, and Grafana
+4. Terraform import for existing AWS infrastructure
+5. Terraform-generated inventory for a smoother Terraform-to-Ansible workflow
+
+That progression is intentional and shows how I approach systems: start simple, automate repeated work, and then add operational visibility.
+
+---
+
+## 🏗️ Architecture
 
 ```text
-Debian EC2
+Ubuntu EC2
   - Nginx
   - Node Exporter
   - Prometheus
   - Grafana
-
-Red Hat EC2
-  - Nginx
-  - Node Exporter
 ```
 
-Prometheus scrapes metrics from both nodes and Grafana visualizes service and host health.
+Prometheus scrapes local host metrics, and Grafana visualizes service and system health.
 
 ---
 
-## Repository structure
+## 🛠️ What I Built
+
+- Manual Nginx hosting on AWS EC2
+- Ansible playbooks for Nginx deployment and monitoring setup
+- Terraform configuration imported from existing AWS infrastructure and used to generate Ansible inventory
+- Monitoring stack with Node Exporter, Prometheus, and Grafana
+- Documentation and proof artifacts for each stage of the project
+
+---
+
+## 📁 Repository Structure
 
 ```text
-ec2-nginx-web-hosting/
-├── ansible-project/       # automation playbooks + roles + screenshots
-├── docs/                  # phase-wise setup guides
-├── monitoring/            # monitoring configs and notes
-├── screenshots/           # manual deployment proof
+aws-devops-webops-lab/
+├── ansible-project/   # playbooks, roles, sample inventory, screenshots
+├── docs/              # phase-by-phase documentation
+├── monitoring/        # monitoring config and notes
+├── terraform/         # Terraform configuration and generated inventory workflow
+├── screenshots/       # manual deployment proof
 └── README.md
 ```
 
 ---
 
-## Quick run (automation)
+## 🚀 Project Flow
+
+Project progression:
+
+```text
+Manual setup
+  -> Ansible automation
+  -> Monitoring
+  -> Terraform import for existing infrastructure
+```
+
+Current execution flow:
+
+```text
+Terraform
+  -> generated Ansible inventory
+  -> Ansible Nginx deployment
+  -> Ansible monitoring deployment
+  -> validation
+```
+
+- Terraform generates `ansible-project/inventory.generated.ini`
+- Ansible deploys Nginx to the `web_servers` group
+- Ansible deploys Prometheus and Grafana to the `monitoring` group
+- Prometheus scrapes the local Node Exporter endpoint
+
+Detailed phase docs:
+
+- [Manual Nginx setup](docs/1-nginx-setup.md)
+- [Ansible automation](docs/2-ansible-automation.md)
+- [Monitoring setup](docs/3-monitoring-setup.md)
+- [Terraform import setup](docs/4-terraform-setup.md)
+
+---
+
+## ▶️ Quick Run
+
+### Manual inventory flow
 
 ```bash
 cd ansible-project
 cp inventory.example.ini inventory.ini
-# edit inventory.ini with your own host IPs and key paths
+# edit inventory.ini with your Ubuntu host IP and key path
 ansible-playbook -i inventory.ini playbook.yml
 ansible-playbook -i inventory.ini monitoring.yml
 ```
 
-> `inventory.example.ini` is safe template data. Keep your real inventory local.
+### Terraform-generated inventory flow
+
+```bash
+ansible-playbook -i ansible-project/inventory.generated.ini ansible-project/playbook.yml
+ansible-playbook -i ansible-project/inventory.generated.ini ansible-project/monitoring.yml
+```
+
+`inventory.example.ini` is the safe template for manual use.
+
+`inventory.generated.ini` is machine-generated by Terraform and ignored by git.
 
 ---
 
-## Proof artifacts
+## 📸 Proof Artifacts
 
-- Manual setup evidence: `screenshots/`
-- Ansible execution + service screenshots: `ansible-project/screenshots/`
-- Monitoring proof (targets/dashboard): documented in `docs/3-monitoring-setup.md`
+![Grafana dashboard overview](monitoring/grafana/screenshots/grafana-dashboard-overview.png)
 
----
-
-## Outcomes
-
-- ✅ Nginx deployed on AWS EC2 (Debian + Red Hat)
-- ✅ Repeatable Ansible-based deployment flow
-- ✅ Monitoring stack with Prometheus + Grafana
-- ✅ Portfolio-ready documentation with implementation proof
+| Area | Proof |
+|------|-------|
+| Manual EC2 setup | [EC2 running](screenshots/ec2-running.png), [SSH connection](screenshots/ssh-connection.png), [Nginx status](screenshots/nginx-status.png), [custom webpage](screenshots/Custom-webpage.png) |
+| Ansible automation | [Playbook run](ansible-project/screenshots/Playbook_run.png) |
+| Monitoring | [Grafana dashboard](monitoring/grafana/screenshots/grafana-dashboard-overview.png), [Prometheus targets](monitoring/grafana/screenshots/prometheus-targets-up.png) |
 
 ---
 
-## Next upgrades
+## ✅ Key Outcomes
 
-- Terraform for provisioning EC2/VPC/Security Groups
-- Dockerized monitoring stack
-- CI/CD with GitHub Actions
+- Built a complete Nginx hosting workflow on AWS EC2
+- Converted manual server setup into repeatable Ansible automation
+- Added monitoring for infrastructure visibility and validation
+- Connected Terraform and Ansible with generated inventory for smoother automation
+- Produced portfolio-ready documentation for both technical and non-technical readers
+
+---
+
+## 📌 Current State
+
+- Single Ubuntu EC2 instance
+- Nginx deployment automated with Ansible
+- Monitoring stack running on the same host
+- Terraform-assisted Ansible inventory generation
+- Docker and CI/CD planned as the next improvements
+
+---
+
+## 🧭 Next Improvements
+
+- Dockerized app or monitoring workflow
+- CI checks with GitHub Actions
+- CD pipeline for automated deployments
+- Security hardening for SSH and monitoring exposure
