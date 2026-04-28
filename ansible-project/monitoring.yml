@@ -1,10 +1,15 @@
 ---
-- name: Deploy Monitoring tools
-  hosts: all
+- name: Install node exporter on all nodes
+  hosts: web_servers
   become: true
-  roles: 
+  roles:
     - node_exporter
-    - prometheus
-    - grafana
 
-    
+- name: Install monitoring stack
+  hosts: monitoring
+  become: true
+  roles:
+    - role: prometheus
+      tags: prometheus
+    - role: grafana
+      tags: grafana
