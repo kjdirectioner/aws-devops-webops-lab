@@ -7,9 +7,14 @@ This folder shows the Infrastructure as Code phase of the project. The EC2 insta
 ## 🧩 What This Shows
 
 - AWS provider configuration
-- Importing existing EC2 and security group resources
+- Importing an existing EC2 instance
+- Matching Terraform config to the real AWS setup
+- Moving AMI and instance type into variables and `terraform.tfvars`
+- Creating and attaching a custom security group
+- Closing unnecessary public access for local-only monitoring traffic
+- Exporting the public IP for Ansible
 - Managing infrastructure state with Terraform
-- Generating Ansible inventory from Terraform output
+- Bridging Terraform output into Ansible
 
 ---
 
@@ -36,11 +41,15 @@ That mirrors a real-world situation: not every cloud environment starts clean. S
 
 ```text
 Existing AWS EC2 infrastructure
-  -> AWS CLI authentication
-  -> Terraform import
-  -> Terraform state
-  -> generated Ansible inventory
-  -> Ansible deployment and monitoring
+  -> AWS CLI reconfiguration
+  -> terraform import aws_instance.demo <instance-id>
+  -> config matched to real AWS state
+  -> terraform plan reached no destroy/recreate
+  -> variables moved to terraform.tfvars
+  -> custom security group attached
+  -> unnecessary public ports closed
+  -> public IP exported
+  -> Terraform output passed into Ansible
 ```
 
 Terraform generates:
@@ -49,7 +58,13 @@ Terraform generates:
 ansible-project/inventory.generated.ini
 ```
 
-That file is ignored by git because it contains local infrastructure output.
+The public IP can also be read directly:
+
+```bash
+terraform output -raw instance_ip
+```
+
+The generated inventory file is ignored by git because it contains local infrastructure output.
 
 ---
 
