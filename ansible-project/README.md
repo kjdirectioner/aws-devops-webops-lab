@@ -61,7 +61,11 @@ ansible-playbook -i inventory.generated.ini monitoring.yml
 
 ## 📸 Proof
 
-- [Playbook run screenshot](screenshots/Playbook_run.png)
+The automation step was validated with a successful playbook run:
+
+This proof image was captured during the earlier two-instance phase, so two host IPs appear in the output. The current repo has since been refactored to a single Ubuntu instance.
+
+![Playbook run screenshot](screenshots/Playbook_run.png)
 
 ---
 

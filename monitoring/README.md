@@ -36,9 +36,19 @@ Prometheus scrapes the local Node Exporter endpoint, and Grafana displays the me
 
 ## 📸 Proof
 
-- [Grafana dashboard](grafana/screenshots/grafana-dashboard-overview.png)
+Grafana shows the host metrics visually:
+
+![Grafana dashboard](grafana/screenshots/grafana-dashboard-overview.png)
+
+Prometheus confirms the exporter target is healthy:
+
+This screenshot was taken during the earlier two-instance phase, so it shows two targets. The current setup now keeps monitoring on the same Ubuntu instance and scrapes locally.
+
+![Prometheus targets marked UP](grafana/screenshots/prometheus-targets-up.png)
+
+Extra proof:
+
 - [Instance selector](grafana/screenshots/grafana-instance-selector.png)
-- [Prometheus targets marked UP](grafana/screenshots/prometheus-targets-up.png)
 
 ---
 

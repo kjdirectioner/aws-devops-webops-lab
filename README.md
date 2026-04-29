@@ -68,6 +68,8 @@ Ubuntu EC2
 
 Prometheus scrapes local host metrics, and Grafana visualizes service and system health.
 
+![Grafana dashboard overview](monitoring/grafana/screenshots/grafana-dashboard-overview.png)
+
 ---
 
 ## 🛠️ What I Built
@@ -156,13 +158,33 @@ ansible-playbook -i ansible-project/inventory.generated.ini ansible-project/moni
 
 ## 📸 Proof Artifacts
 
-![Grafana dashboard overview](monitoring/grafana/screenshots/grafana-dashboard-overview.png)
-
 | Area | Proof |
 |------|-------|
 | Manual EC2 setup | [EC2 running](screenshots/ec2-running.png), [SSH connection](screenshots/ssh-connection.png), [Nginx status](screenshots/nginx-status.png), [custom webpage](screenshots/Custom-webpage.png) |
 | Ansible automation | [Playbook run](ansible-project/screenshots/Playbook_run.png) |
 | Monitoring | [Grafana dashboard](monitoring/grafana/screenshots/grafana-dashboard-overview.png), [Prometheus targets](monitoring/grafana/screenshots/prometheus-targets-up.png) |
+
+### Manual validation
+
+The initial EC2 + Nginx setup was confirmed with a live custom page:
+
+![Custom webpage running](screenshots/Custom-webpage.png)
+
+### Automation validation
+
+The Ansible run shows the deployment moving from manual setup to repeatable automation:
+
+This screenshot is from the earlier two-instance phase of the project, so it shows two host IPs even though the current setup has been simplified to one Ubuntu instance.
+
+![Ansible playbook run](ansible-project/screenshots/Playbook_run.png)
+
+### Monitoring validation
+
+Prometheus and Grafana confirm the instance is not only running, but observable:
+
+This targets view is also from the earlier two-instance phase, which is why it shows two targets. The current project now runs monitoring locally on a single Ubuntu host.
+
+![Prometheus targets up](monitoring/grafana/screenshots/prometheus-targets-up.png)
 
 ---
 
