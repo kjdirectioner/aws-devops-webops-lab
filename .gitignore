@@ -2,7 +2,10 @@
 .vscode/
 ansible-project/inventory.ini
 ansible-project/inventory.generated.ini
-terraform/.terraform/
-terraform/*.tfstate
-terraform/*.tfstate.backup
+# Ignore all Terraform execution states anywhere in the repo
+**/*.tfstate
+**/*.tfstate.backup
+
+# Ignore all hidden Terraform cache binary directories
+**/.terraform/
 terraform/main.tf.original
