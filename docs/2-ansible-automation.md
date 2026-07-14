@@ -11,6 +11,8 @@ This document explains the current Ansible workflow used in this project for a s
    -> 02 Ansible automation  ← you are here
    -> 03 Monitoring setup
    -> 04 Terraform import setup
+   -> 05 Manual network re-architecture
+   -> 06 Terraform modular refactor
 ```
 
 This phase takes the manual Nginx work from Phase 1 and turns it into repeatable automation.
@@ -32,6 +34,8 @@ The project now supports two inventory workflows:
 
 - manual inventory using `inventory.example.ini`
 - Terraform-generated inventory using `inventory.generated.ini`
+
+> **Note:** these workflows currently target the public-IP, single-instance layout from Phase 4. Reaching the private-subnet instance introduced in Phase 6 requires routing through the EC2 Instance Connect Endpoint — see the [Terraform Modular Refactor doc](./6-terraform-modular.md) for the current status of that work.
 
 ## 🗂️ Files Used
 

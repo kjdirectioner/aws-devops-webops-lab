@@ -14,6 +14,8 @@ You are here:
    -> 02 Ansible automation
    -> 03 Monitoring setup
    -> 04 Terraform import setup
+   -> 05 Manual network re-architecture
+   -> 06 Terraform modular refactor
 ```
 
 This first phase establishes the baseline server before automation, monitoring, and Terraform are added.
@@ -34,15 +36,17 @@ This project demonstrates how to:
 
 ## 🧱 Project Structure Overview
 
-This project is divided into four key phases, each representing a progressive step in automating and managing web hosting on AWS EC2:
+This project is divided into several progressive phases, each representing a step in automating and managing web hosting on AWS EC2:
 ```
 aws-devops-webops-lab/
 │
 ├── docs/
-│   ├── 1-nginx-setup.md           # Manual Nginx setup on AWS EC2 (this file)
-│   ├── 2-ansible-automation.md    # Automating Ubuntu Nginx setup with Ansible
-│   ├── 3-monitoring-setup.md      # Monitoring setup with Prometheus + Grafana
-│   └── 4-terraform-setup.md       # Import existing AWS infrastructure into Terraform
+│   ├── 1-nginx-setup.md                   # Manual Nginx setup on AWS EC2 (this file)
+│   ├── 2-ansible-automation.md            # Automating Ubuntu Nginx setup with Ansible
+│   ├── 3-monitoring-setup.md              # Monitoring setup with Prometheus + Grafana
+│   ├── 4-terraform-setup.md               # Import existing AWS infrastructure into Terraform
+│   ├── 5-manual-network-rearchitecture.md # Manual zero-exposure network redesign
+│   └── 6-terraform-modular.md             # Codifying the network as Terraform modules
 
 ```        
 ---
@@ -127,6 +131,8 @@ Here are some extra screenshots showing the setup process and server status:
 - [02 — Ansible Automation Setup](./2-ansible-automation.md): automate EC2 + Nginx deployment
 - [03 — Monitoring Setup](./3-monitoring-setup.md): monitor the Ubuntu EC2 instance
 - [04 — Terraform Import Setup](./4-terraform-setup.md): bring existing AWS infrastructure under IaC
+- [05 — Manual Network Re-Architecture](./5-manual-network-rearchitecture.md): redesign the network for zero public exposure
+- [06 — Terraform Modular Refactor](./6-terraform-modular.md): codify the network redesign as Terraform modules
 
 ---
 
