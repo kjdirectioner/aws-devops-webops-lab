@@ -4,12 +4,15 @@ resource "aws_instance" "web_server" {
   instance_type          = var.instance_type
   subnet_id              = var.private_subnet_ids[0] # Drops it cleanly into Private Subnet 1
   vpc_security_group_ids = [var.app_sg_id]           # Attaches the chained firewall
-
+  key_name               = aws_key_pair.deployer.key_name
   tags = {
     Name = "Nginx-Private-Server"
   }
 }
-
+resource "aws_key_pair" "deployer" {
+  key_name   = "id_ansible"
+  public_key = file("~/.ssh/id_ansible.pub") # path to the public key
+}
 # 2. The Ingress Engine: Application Load Balancer
 resource "aws_lb" "external_alb" {
   name               = "main-alb"

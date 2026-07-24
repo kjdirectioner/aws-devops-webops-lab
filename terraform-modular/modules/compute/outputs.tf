@@ -7,3 +7,8 @@ output "alb_dns" {
   value       = aws_lb.external_alb.dns_name
   description = "The public web address to access your application"
 }
+
+output "instance_id" {
+  value       = aws_instance.web_server.id
+  description = " The raw AWS instance ID required for the EICE tunnel"
+}

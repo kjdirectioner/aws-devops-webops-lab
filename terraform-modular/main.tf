@@ -19,3 +19,16 @@ module "compute" {
   ami                = var.ami
   instance_type      = var.instance_type
 }
+
+resource "local_file" "ansible_inventory" {
+  content  = <<EOT
+[web_servers]
+# private_ip: ${module.compute.private_ip}
+web-server-1 ansible_host=${module.compute.instance_id}
+
+[monitoring]
+# private_ip: ${module.compute.private_ip}
+monitor-1 ansible_host=${module.compute.instance_id}
+EOT
+  filename = "../ansible-project/inventory.ini"
+}
