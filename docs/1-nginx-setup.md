@@ -5,6 +5,23 @@ It serves as **Phase 1** of the larger Nginx AWS automation and monitoring proje
 
 ---
 
+## 🧭 Documentation Path
+
+You are here:
+
+```text
+01 Manual EC2 + Nginx setup  ← you are here
+   -> 02 Ansible automation
+   -> 03 Monitoring setup
+   -> 04 Terraform import setup
+```
+
+This first phase establishes the baseline server before automation, monitoring, and Terraform are added.
+
+Next: [02 — Ansible Automation Setup](./2-ansible-automation.md)
+
+---
+
 ## 🧩 Overview
 
 This project demonstrates how to:
@@ -17,14 +34,15 @@ This project demonstrates how to:
 
 ## 🧱 Project Structure Overview
 
-This project is divided into three key phases, each representing a progressive step in automating and scaling web hosting on AWS EC2:
+This project is divided into four key phases, each representing a progressive step in automating and managing web hosting on AWS EC2:
 ```
-nginx-aws-project/
+aws-devops-webops-lab/
 │
 ├── docs/
 │   ├── 1-nginx-setup.md           # Manual Nginx setup on AWS EC2 (this file)
-│   ├── 2-ansible-automation.md    # Automating multi-instance setup with Ansible
-│   └── 3-monitoring-setup.md       # Monitoring setup with Prometheus + Grafana
+│   ├── 2-ansible-automation.md    # Automating Ubuntu Nginx setup with Ansible
+│   ├── 3-monitoring-setup.md      # Monitoring setup with Prometheus + Grafana
+│   └── 4-terraform-setup.md       # Import existing AWS infrastructure into Terraform
 
 ```        
 ---
@@ -88,34 +106,37 @@ Paste the following into the index.html
 ```
 ### Result
 After saving and reloading in the browser, the custom page was live on the public IP.
-![Custom Web Page Running](/screenshots/Custom-webpage.png)
+![Custom Web Page Running](../screenshots/Custom-webpage.png)
 ## Additional Screenshots
 Here are some extra screenshots showing the setup process and server status:
 
 - **EC2 Instance Running:**  
-  ![EC2 Running](/screenshots/ec2-running.png)
+  ![EC2 Running](../screenshots/ec2-running.png)
 
 - **SSH Connection to EC2:**  
-  ![SSH Connection](/screenshots/ssh-connection.png)
+  ![SSH Connection](../screenshots/ssh-connection.png)
 
 - **Installing Nginx:**  
-  ![Installing Nginx](/screenshots/installing-nginx.png)
+  ![Installing Nginx](../screenshots/installing-nginx.png)
 
 - **Nginx Service Status:**  
-  ![Nginx Status](/screenshots/nginx-status.png)
+  ![Nginx Status](../screenshots/nginx-status.png)
 
 ## 🔁 Related Phases
-	•	2 — Ansible Automation Setup￼ (next step: automate EC2 + Nginx deployment)
-	•	3 — Monitoring Setup (Prometheus + Grafana)￼ (real-time monitoring of both EC2 instances)
+
+- [02 — Ansible Automation Setup](./2-ansible-automation.md): automate EC2 + Nginx deployment
+- [03 — Monitoring Setup](./3-monitoring-setup.md): monitor the Ubuntu EC2 instance
+- [04 — Terraform Import Setup](./4-terraform-setup.md): bring existing AWS infrastructure under IaC
 
 ---
 
 ### 🧭 Notes & Next Steps
 
 This phase (manual setup) lays the foundation for:
-	•	Automating server configuration via Ansible
-	•	Extending to multi-instance orchestration
-	•	Adding Prometheus + Grafana monitoring
+
+- Automating server configuration via Ansible
+- Extending the single-instance setup with repeatable automation
+- Adding Prometheus + Grafana monitoring
 
 >📚 This file is part of the documentation series under /docs/
-Next: [Ansible Automation Setup](/ansible-project/README.md) →￼
+Next: [02 — Ansible Automation Setup](./2-ansible-automation.md) →
