@@ -32,7 +32,7 @@ This is useful because many real environments already have resources running bef
 Current Terraform coverage:
 
 - Ubuntu EC2 instance
-- security group
+- custom security group attached to the instance
 - EC2 public IP output
 - generated Ansible inventory
 
@@ -42,12 +42,15 @@ Terraform also creates `ansible-project/inventory.generated.ini`, which connects
 
 ```text
 Manual AWS infrastructure
-  -> configure AWS CLI
-  -> write Terraform resource blocks
-  -> import existing AWS resources
-  -> validate Terraform state
-  -> generate Ansible inventory
-  -> run Ansible playbooks
+  -> reconfigure AWS CLI credentials
+  -> import existing EC2 instance
+  -> sync Terraform config with real AWS state
+  -> reach "No changes" in terraform plan
+  -> replace hardcoding with variables and terraform.tfvars
+  -> create and attach a custom security group
+  -> close ports that are not needed publicly
+  -> output the public IP
+  -> pass Terraform output into Ansible
 ```
 
 ## ⚙️ Prerequisites
@@ -55,12 +58,12 @@ Manual AWS infrastructure
 - Terraform installed locally
 - AWS CLI installed locally
 - AWS IAM access key and secret access key
-- existing EC2 instance and security group in AWS
+- existing EC2 instance in AWS
 - SSH key available locally for Ansible access
 
 ## 🔐 AWS CLI Authentication
 
-AWS CLI was configured locally using access keys:
+AWS CLI was configured or reconfigured locally using access keys:
 
 ```bash
 aws configure
@@ -82,7 +85,7 @@ Important: access keys should never be committed to the repository. They should 
 | File | Purpose |
 |------|---------|
 | `terraform/provider.tf` | AWS provider and region |
-| `terraform/main.tf` | EC2, security group, output, and generated inventory |
+| `terraform/main.tf` | EC2 config, security group config, public IP output, and generated inventory |
 | `terraform/terraform.tfvars` | Local variable values |
 | `terraform/.terraform.lock.hcl` | Provider lock file |
 
@@ -100,25 +103,93 @@ Initialize Terraform:
 terraform init
 ```
 
-Write matching Terraform resource blocks before importing. Terraform needs the resource names in code before it can connect them to existing AWS resources.
+Write the Terraform resource block before importing. Terraform needs the resource name in code before it can connect it to the existing AWS instance.
 
-Example import commands:
+Import command used:
 
 ```bash
 terraform import aws_instance.demo <instance-id>
-terraform import aws_security_group.web_sg <security-group-id>
 ```
 
-After import, verify the state:
+After import, the config was adjusted to match the real EC2 state:
+
+- AMI
+- instance type
+- tags
+- security group attachment
+
+Then the plan was checked:
 
 ```bash
 terraform state list
 terraform plan
 ```
 
-The goal is for Terraform to recognize the existing infrastructure without trying to recreate it.
+The important part of this phase was reaching a plan that did not destroy or recreate the EC2 instance. The target result was `No changes` or only safe in-place updates.
+
+## 🔐 Security Group Control
+
+After the EC2 instance was imported, a custom security group was defined and attached through Terraform.
+
+Only the required public access was kept open:
+
+- SSH: `22`
+- HTTP: `80`
+- HTTPS: `443`
+
+Node Exporter stays local to the instance because Prometheus scrapes `localhost:9100` on the same host. Public `9100` ingress is not required for the current single-instance setup, so it was closed.
+
+ICMP was also left closed because it is not required for the current workflow.
+
+This moved access control into Terraform and reduced unnecessary public exposure.
+
+## 🧱 Variables And tfvars
+
+After the imported state matched the real infrastructure, hardcoded values were moved into variables:
+
+```hcl
+variable "ami" {
+  type = string
+}
+
+variable "instance_type" {
+  type = string
+}
+```
+
+Values are stored in `terraform.tfvars`:
+
+```hcl
+ami           = "ami-0a716d3f3b16d290c"
+instance_type = "t3.micro"
+```
 
 ## 🔗 Generating Ansible Inventory
+
+Terraform exports the EC2 public IP:
+
+```hcl
+output "instance_ip" {
+  value = aws_instance.demo.public_ip
+}
+```
+
+That output can be used directly from the command line:
+
+```bash
+terraform output -raw instance_ip
+```
+
+For quick Ansible checks, the Terraform output can be passed directly into Ansible:
+
+```bash
+ansible all -i "$(terraform -chdir=terraform output -raw instance_ip)," \
+  -u ubuntu \
+  --private-key ~/.ssh/your-key.pem \
+  -m ping
+```
+
+For playbook runs, this repo also uses Terraform to generate a grouped inventory file.
 
 The `local_file` resource in `terraform/main.tf` generates:
 
@@ -140,19 +211,13 @@ In this project, both groups point to the same Ubuntu EC2 instance.
 
 ## ▶️ Run Terraform
 
-Validate the configuration:
-
-```bash
-terraform validate
-```
-
 Preview changes:
 
 ```bash
 terraform plan
 ```
 
-Apply changes when ready:
+Apply only after confirming Terraform is not planning to destroy or replace the existing instance:
 
 ```bash
 terraform apply
@@ -188,7 +253,8 @@ This Terraform stage connects the earlier project phases:
 1. Manual EC2 setup proved the baseline
 2. Ansible automated server configuration
 3. Monitoring added visibility
-4. Terraform imported the existing infrastructure and generates inventory for Ansible
+4. Terraform imported the existing EC2 instance
+5. Terraform output bridged the infrastructure into Ansible
 
 Next planned improvements are Docker and CI/CD.
 
