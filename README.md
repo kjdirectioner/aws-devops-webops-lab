@@ -65,10 +65,24 @@ Here are some extra screenshots showing the setup process and server status:
 
 - **Nginx Service Status:**  
   ![Nginx Status](screenshots/nginx-status.png)
-## Next Steps
-To expand this project and gain deeper hands-on skills, I plan to:  
-- Automate the EC2 + Nginx setup using **Ansible**  
-- Add **SSL/TLS** with Let’s Encrypt for secure HTTPS access  
-- Explore **AWS S3 static website hosting** as an alternative to EC2  
-- Set up **basic monitoring/logging** for the Nginx server  
 
+## ansible-automation Branch (v2.0)
+
+This branch builds on the manual deployment (v1.0) by automating the setup with Ansible.  
+
+### Current Status
+- Project structure created (`inventory.ini`, `playbook.yml`)
+- Work in progress: automation tasks being added
+
+### Planned Tasks
+- Define inventory file with EC2 server details
+- Write playbook to install Nginx
+- Deploy custom HTML page
+- Ensure Nginx service is running
+
+---
+
+## Next Steps (Longer-term Ideas)
+- Add SSL/TLS with Let’s Encrypt for secure HTTPS access  
+- Explore AWS S3 static website hosting as an alternative to EC2  
+- Set up basic monitoring/logging for the Nginx server
