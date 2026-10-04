@@ -1,0 +1,6 @@
+---
+- name: Deploying docker stack
+  hosts: web_servers
+  become: true
+  roles:
+    - docker_stack

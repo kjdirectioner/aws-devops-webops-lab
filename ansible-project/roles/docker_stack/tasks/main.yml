@@ -1,0 +1,27 @@
+---
+- name: Ensure target build directory exists
+  ansible.builtin.file:
+    path: /opt/nginx-docker
+    state: directory
+    mode: '0755'
+
+- name: Copy Dockerfile and index.html to EC2
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../docker/nginx/"
+    dest: /opt/nginx-docker/
+
+- name: Build custom Nginx Docker image
+  community.docker.docker_image:
+    name: custom-nginx
+    build:
+      path: /opt/nginx-docker
+    source: build
+
+- name: Run Nginx container
+  community.docker.docker_container:
+    name: web-server
+    image: custom-nginx
+    state: started
+    restart_policy: always
+    ports:
+      - "80:80"
