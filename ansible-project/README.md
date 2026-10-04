@@ -35,9 +35,13 @@ Manual EC2 setup
   -> Ansible automation
   -> Monitoring
   -> Terraform import + generated inventory
+  -> Manual network re-architecture (private subnet, ALB, EICE)
+  -> Terraform modular refactor
 ```
 
 The goal is to show that the server can be rebuilt or updated consistently instead of configured by hand every time.
+
+> **Current status:** the playbooks and inventories in this folder target the public-IP, single-instance layout from the Terraform import phase. The instance now also exists in a private subnet behind an ALB (see [`terraform-modular/`](../terraform-modular/README.md)); wiring these playbooks to reach it through the EC2 Instance Connect Endpoint is in progress.
 
 ---
 
@@ -73,3 +77,4 @@ This proof image was captured during the earlier two-instance phase, so two host
 
 - [Ansible setup doc](../docs/2-ansible-automation.md)
 - [Monitoring setup doc](../docs/3-monitoring-setup.md)
+- [Terraform modular refactor doc](../docs/6-terraform-modular.md)

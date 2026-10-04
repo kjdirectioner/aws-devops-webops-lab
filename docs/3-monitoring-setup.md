@@ -11,6 +11,8 @@ This document explains the current monitoring workflow used in the project on a 
    -> 02 Ansible automation
    -> 03 Monitoring setup  ← you are here
    -> 04 Terraform import setup
+   -> 05 Manual network re-architecture
+   -> 06 Terraform modular refactor
 ```
 
 This phase adds visibility after the web server and automation workflow are working.

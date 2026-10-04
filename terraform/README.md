@@ -2,6 +2,8 @@
 
 This folder shows the Infrastructure as Code phase of the project. The EC2 instance already existed in AWS, so Terraform was added using an import workflow instead of recreating the infrastructure.
 
+> **Note:** this folder is kept as the import-based, single-instance reference. The network was later redesigned for zero public exposure and rebuilt with a modular Terraform layout — see [`terraform-modular/`](../terraform-modular/README.md) and [docs/6-terraform-modular.md](../docs/6-terraform-modular.md).
+
 ---
 
 ## 🧩 What This Shows
@@ -71,3 +73,4 @@ The generated inventory file is ignored by git because it contains local infrast
 ## 📖 Detailed Setup
 
 - [Terraform setup doc](../docs/4-terraform-setup.md)
+- [What replaced this layout →](../docs/6-terraform-modular.md)

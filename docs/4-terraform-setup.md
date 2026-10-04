@@ -11,13 +11,15 @@ This document explains how Terraform was added after the infrastructure already 
    -> 02 Ansible automation
    -> 03 Monitoring setup
    -> 04 Terraform import setup  ← you are here
+   -> 05 Manual network re-architecture
+   -> 06 Terraform modular refactor
 ```
 
 This phase connects the already-running AWS infrastructure back into code and generates inventory for Ansible.
 
 Previous: [03 — Monitoring Setup](./3-monitoring-setup.md)
 
-Project overview: [Main README](../README.md)
+Next: [05 — Manual Network Re-Architecture](./5-manual-network-rearchitecture.md)
 
 ---
 
@@ -256,17 +258,13 @@ This Terraform stage connects the earlier project phases:
 4. Terraform imported the existing EC2 instance
 5. Terraform output bridged the infrastructure into Ansible
 
-Next planned improvements are Docker and CI/CD.
+This single-instance, public-IP setup was later redesigned for zero public exposure — see [05 — Manual Network Re-Architecture](./5-manual-network-rearchitecture.md) and [06 — Terraform Modular Refactor](./6-terraform-modular.md).
 
 ---
 
-## 🧭 End Of Current Series
+## 🧭 Next Step
 
-This completes the current documentation path:
-
-```text
-Manual setup -> Ansible automation -> Monitoring -> Terraform import
-```
+The public-facing single instance managed here was the last phase built on a default VPC. The next phase re-architects the network to remove that public exposure entirely.
 
 >📚 This file is part of the documentation series under /docs/
-Back to project overview: [Main README](../README.md)
+Next: [05 — Manual Network Re-Architecture](./5-manual-network-rearchitecture.md) →
