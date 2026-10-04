@@ -71,11 +71,13 @@ ec2-nginx-web-hosting/
 
 ```bash
 cd ansible-project
+cp inventory.example.ini inventory.ini
+# edit inventory.ini with your own host IPs and key paths
 ansible-playbook -i inventory.ini playbook.yml
 ansible-playbook -i inventory.ini monitoring.yml
 ```
 
-> `inventory.ini` currently uses active host values for live demo hosting.
+> `inventory.example.ini` is safe template data. Keep your real inventory local.
 
 ---
 

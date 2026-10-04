@@ -52,7 +52,7 @@ ansible-project/
 
 ## Inventory
 
-`inventory.ini` is currently maintained with active host values for live deployment.
+Use `inventory.example.ini` as a template and keep your real `inventory.ini` local (not committed).
 
 Example shape:
 
@@ -68,6 +68,7 @@ Example shape:
 
 ### Deploy Nginx
 ```bash
+cp inventory.example.ini inventory.ini
 ansible-playbook -i inventory.ini playbook.yml
 ```
 

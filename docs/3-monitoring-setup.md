@@ -33,6 +33,10 @@ and Grafana visualizes them securely through an **SSH tunnel**.
 
 ---
 
+
+> **Live demo note:** In my actual AWS environment, I used a real private target IP during the run.
+> This repo uses placeholders so others can reproduce safely with their own infra values.
+
 ## ⚙️ Step-by-Step Configuration
 
 ### 1. Install Node Exporter on Both EC2 Instances
@@ -106,7 +110,7 @@ scrape_configs:
   - job_name: "node_exporter"
     scrape_interval: 10s
     static_configs:
-      - targets: ["localhost:9100", "10.0.134.125:9100"]
+      - targets: ["localhost:9100", "<redhat-private-ip>:9100"]
 ```
 ### 5. Create Prometheus Service
 **file** /etc/systemd/system/prometheus.service
