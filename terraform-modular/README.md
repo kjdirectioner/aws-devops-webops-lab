@@ -1,6 +1,6 @@
 # 🧱 Terraform Modular — VPC, ALB & Private Compute
 
-This folder shows the code-first phase of the network re-architecture. [Phase 05](../docs/5-manual-network-rearchitecture.md) proved the design by hand in the AWS Console: a custom VPC, private compute, an Application Load Balancer, and access via an EC2 Instance Connect Endpoint instead of an open SSH rule. This folder codifies that exact design as reusable Terraform modules.
+This folder shows the code-first phase of the network re-architecture. [Phase 05](../docs/5-manual-network-rearchitecture.md) proved the design by hand in the AWS Console: a custom VPC, private compute, an Application Load Balancer, and access via an EC2 Instance Connect Endpoint instead of an open SSH rule. This folder codifies that exact design as reusable Terraform modules, and wires Ansible to reach the resulting private-subnet instance through that same EICE path.
 
 ---
 
@@ -11,6 +11,7 @@ This folder shows the code-first phase of the network re-architecture. [Phase 05
 - An **Application Load Balancer** as the only public entry point for web traffic
 - A **chained security group** design (`alb_sg` -> `app_sg` <- `eice_sg`) instead of one open group
 - An **EC2 Instance Connect Endpoint** for admin access, replacing a bastion host and a public IP on the instance
+- A generated Ansible inventory (`ansible-project/inventory.ini`) keyed on **instance ID**, so Ansible can reach the instance automatically through EICE
 
 ---
 
@@ -22,7 +23,7 @@ terraform-modular/
 │   ├── vpc              # VPC, subnets, IGW, NAT gateway, route tables
 │   ├── security_groups   # alb_sg, app_sg, eice_sg
 │   └── compute           # EC2 instance, ALB, target group, listener, EICE
-├── main.tf                # wires the modules together
+├── main.tf                # wires the modules together + generates Ansible inventory
 ├── variables.tf
 ├── terraform.tfvars
 ├── providers.tf
@@ -43,7 +44,7 @@ That single-instance layout was then manually redesigned in Phase 05 for zero pu
 
 | File | Purpose |
 |------|---------|
-| `main.tf` | Wires `vpc`, `security_groups`, and `compute` modules together |
+| `main.tf` | Wires `vpc`, `security_groups`, and `compute` modules together, and generates `ansible-project/inventory.ini` |
 | `variables.tf` | Region, VPC CIDR, AMI, instance type |
 | `terraform.tfvars` | Local non-secret variable values |
 | `outputs.tf` | Instance private IP and ALB DNS name |
@@ -69,13 +70,39 @@ terraform output load_balancer_url
 terraform output app_server_private_ip
 ```
 
+Run Ansible against the resulting instance:
+
+```bash
+cd ../ansible-project
+ansible-playbook -i inventory.ini playbook.yml
+ansible-playbook -i inventory.ini monitoring.yml
+```
+
+---
+
+## 🔗 How Ansible Reaches This Instance
+
+The web server sits in a **private subnet with no public IP** — it's only reachable through the ALB (port `80`) for web traffic, or through the EICE endpoint (port `22`) for administrative access.
+
+Since there's no IP to put in an inventory file, `main.tf`'s `local_file` resource generates `ansible-project/inventory.ini` using the **instance ID** as `ansible_host` instead:
+
+```ini
+[web_servers]
+web-server-1 ansible_host=<instance-id>
+
+[monitoring]
+monitor-1 ansible_host=<instance-id>
+```
+
+`ansible-project/ansible.cfg` then defines an SSH `ProxyCommand` that calls `aws ec2-instance-connect send-ssh-public-key` and `open-tunnel` using that instance ID (`%n`) to open a temporary tunnel on every connection — EICE operates on instance ID, not IP, so this is the correct mechanism for a target with no address of its own. No manual tunnel setup or bastion host is required.
+
 ---
 
 ## 🧭 Notes
 
-- The web server sits in a **private subnet with no public IP** — it is only reachable through the ALB (port `80`) or through the EICE endpoint (port `22`).
-- Ansible inventory generation is not yet wired up for this module (it currently only exists for the Phase 4 `terraform/` setup, which used a public IP). Running configuration management against this environment currently means going through the EICE endpoint manually — this is being wired up next.
 - The original `terraform/` folder is kept as-is as the import-based reference; this folder is the current version of the infrastructure.
+- Remote Terraform state (S3 + DynamoDB locking) is not yet configured; both this folder and `terraform/` currently use local state.
+- CI checks (`terraform validate`, `ansible-lint`) are planned but not yet automated.
 
 ---
 

@@ -1,6 +1,6 @@
 # 🧱 06 — Terraform Modular Refactor (Codifying the Zero-Exposure Network)
 
-This document explains how the manually-built network from Phase 05 was rebuilt as reusable Terraform modules: a custom VPC, public/private subnets, an Application Load Balancer, and access via an EC2 Instance Connect Endpoint — all now defined in code instead of AWS Console clicks.
+This document explains how the manually-built network from Phase 05 was rebuilt as reusable Terraform modules: a custom VPC, public/private subnets, an Application Load Balancer, and access via an EC2 Instance Connect Endpoint — all now defined in code instead of AWS Console clicks. It also covers how Ansible was wired to reach the resulting private-subnet instance.
 
 ---
 
@@ -50,7 +50,7 @@ This is the same shape proven manually in Phase 05, now expressed entirely as Te
 
 | File | Purpose |
 |------|---------|
-| `terraform-modular/main.tf` | Wires the three modules together |
+| `terraform-modular/main.tf` | Wires the three modules together and generates `ansible-project/inventory.ini` |
 | `terraform-modular/variables.tf` | Region, VPC CIDR, AMI, instance type |
 | `terraform-modular/terraform.tfvars` | Local non-secret variable values |
 | `terraform-modular/outputs.tf` | Private IP of the instance, ALB DNS name |
@@ -84,6 +84,7 @@ Manually-built network (Phase 05)
   -> put an ALB in front of it in the public subnets
   -> add an EC2 Instance Connect Endpoint for SSH access instead of a bastion
   -> expose only private_ip and alb_dns as outputs
+  -> generate an Ansible inventory keyed on instance ID and wire it through EICE
 ```
 
 ## ▶️ Run Terraform
@@ -118,11 +119,28 @@ AWS Console -> EC2 -> Target Groups -> web-servers-tg -> Targets
 
 The instance should show as `healthy`.
 
-## 🧭 Notes & Known Gaps
+## 🔗 Ansible Wiring Through EICE (Complete)
 
-- `app_server_private_ip` is a **private** IP. It is not reachable directly from the internet, and the current Ansible inventory workflow (which assumes a public IP) does not yet target it — Ansible runs against this environment currently go through the EICE endpoint or a temporary tunnel until the inventory generation is updated for this module.
-- This module does not currently generate `inventory.generated.ini` the way `terraform/main.tf` does in Phase 04. Wiring that up for the private-subnet setup is in progress.
+The private-subnet instance has no public IP and no reachable private IP from the operator's machine, so a normal `ansible_host: <ip>` inventory entry doesn't work here. Instead:
+
+- `terraform-modular/main.tf` generates `ansible-project/inventory.ini` with `ansible_host` set to the **instance ID**, not an IP.
+- `ansible-project/ansible.cfg` defines an SSH `ProxyCommand` that runs `aws ec2-instance-connect send-ssh-public-key` and `open-tunnel` against that instance ID before every connection, using `%n` (the inventory hostname) as the instance ID.
+- This means EICE tunneling happens automatically and transparently on every `ansible-playbook` run — no manual `aws ec2-instance-connect open-tunnel` step or temporary bastion is needed.
+
+This closes the gap noted in earlier drafts of this doc. Running:
+
+```bash
+ansible-playbook -i ansible-project/inventory.ini ansible-project/playbook.yml
+ansible-playbook -i ansible-project/inventory.ini ansible-project/monitoring.yml
+```
+
+now deploys Nginx and the monitoring stack onto the private-subnet instance end-to-end, entirely through code.
+
+## 🧭 Notes & Remaining Gaps
+
 - The original Phase 04 `terraform/` folder is left in place as the import-based, single-instance reference; `terraform-modular/` is the current version of the infrastructure.
+- Remote Terraform state (e.g. S3 + DynamoDB locking) is not yet configured for either `terraform/` or `terraform-modular/`; both currently use local state.
+- CI checks (`terraform validate`, `ansible-lint`, syntax checks) are not yet automated — see the main README's "Next Improvements."
 
 ## 🎯 Expected Outcome
 
@@ -130,13 +148,14 @@ The instance should show as `healthy`.
 - The web server is no longer directly exposed to the internet
 - Traffic reaches the instance only through the ALB
 - Administrative access goes through EICE instead of an open SSH ingress rule
+- Ansible reaches the private-subnet instance automatically through that same EICE path
 - The Phase 05 network design is now reproducible from code, not AWS Console memory
 
 ---
 
 ## 🧭 Next Step
 
-With the network layer codified, the immediate next task is wiring Ansible to reach the private subnet (through EICE) so configuration management still works end-to-end. After that, planned improvements are Docker for the app layer and CI/CD for automated `terraform plan`/`apply` on change.
+With the network layer codified and Ansible wired through EICE, the next planned improvements are Docker for the app layer, remote Terraform state, and CI/CD for automated `terraform plan`/`apply` and playbook checks on change.
 
 >📚 This file is part of the documentation series under /docs/
 Back to project overview: [Main README](../README.md)
