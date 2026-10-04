@@ -10,6 +10,7 @@
     src: "{{ node_exporter_tmp_dir }}/node_exporter-{{ node_exporter_version }}.{{ node_exporter_os }}-{{ node_exporter_arch }}.tar.gz"
     dest: "{{ node_exporter_tmp_dir }}"
     remote_src: yes
+    
 
 - name: Move Node Exporter binary to install directory
   copy:
@@ -18,7 +19,6 @@
     owner: root
     group: root
     mode: '0755'
-    force: yes
     remote_src: yes
 
 - name: Create Node Exporter system user
@@ -39,25 +39,16 @@
     - Reload systemd 
     - Restart node_exporter
 
-- name: Start and enable Node Exporter
+- name: Flush handlers to avoid race condition
+  meta: flush_handlers
+
+- name: enable Node Exporter
   service: 
     name: "{{ node_exporter_service_name }}"
     enabled: yes
     state: started
 
-- name: Verify Node Exporter binary
-  stat:
-    path: "{{ node_exporter_install_dir }}/node_exporter"
-  register: node_exporter_binary
-- debug:
-    msg: "Node Exporter binary successfully deployed to {{ node_exporter_install_dir }}"
-  when: node_exporter_binary.stat.exists
-
 - name: Cleanup Node Exporter temp files
   file:
     path: "{{ node_exporter_tmp_dir }}/node_exporter-{{ node_exporter_version }}.{{ node_exporter_os }}-{{ node_exporter_arch }}"
     state: absent
-
-- name: Fix SELinux context if enforcing
-  command: chcon -t bin_t {{ node_exporter_install_dir }}/node_exporter
-  when: ansible_os_family == "RedHat"

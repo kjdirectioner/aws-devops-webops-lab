@@ -1,2 +1,7 @@
 .DS_Store
 .vscode/
+ansible-project/inventory.ini
+ansible-project/inventory.generated.ini
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup

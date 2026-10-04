@@ -1,4 +1,4 @@
 ---
-- name: Include Debian-specific tasks
-  include_tasks: debian.yml
-  when: ansible_os_family == "Debian"
+- name: Include Ubuntu-specific tasks
+  include_tasks: ubuntu.yml
+  when: ansible_distribution == "Ubuntu"
