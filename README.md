@@ -50,7 +50,7 @@ Paste the following into the index.html
 ```
 ### Result
 After saving and reloading in the browser, the custom page was live on the public IP.
-![Custom Web Page Running](screenshots/custom-webpage.png)
+![Custom Web Page Running](screenshots/Custom-webpage.png)
 ## Additional Screenshots
 Here are some extra screenshots showing the setup process and server status:
 
