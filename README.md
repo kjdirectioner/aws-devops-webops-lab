@@ -24,6 +24,7 @@ This project reflects the kind of work involved in entry-level DevOps and cloud 
 - adding monitoring and operational visibility
 - designing and codifying a production-shaped network
 - reaching a private, zero-public-IP instance through a proper bastion-less access pattern (EICE)
+- managing Terraform state remotely and safely, with locking, instead of on a local disk
 - documenting the workflow clearly for reproducibility
 
 ---
@@ -33,7 +34,7 @@ This project reflects the kind of work involved in entry-level DevOps and cloud 
 - AWS EC2, VPC, ALB, NAT Gateway, EC2 Instance Connect Endpoint
 - Ubuntu Linux
 - Nginx
-- Terraform (import workflow and modular design)
+- Terraform (import workflow, modular design, and remote state with S3 + DynamoDB locking)
 - Ansible (including dynamic, instance-ID-based inventory and EICE-tunneled SSH)
 - Prometheus
 - Grafana
@@ -54,9 +55,9 @@ This project progressed in stages:
 3. Monitoring with Node Exporter, Prometheus, and Grafana
 4. Terraform import for existing AWS infrastructure, including generated Ansible inventory
 5. Manual zero-exposure network re-architecture: multi-subnet VPC, ALB, and EC2 Instance Connect Endpoint
-6. Terraform modular refactor — codifying that network design as reusable modules, and wiring Ansible to reach the private-subnet instance through EICE (Current)
+6. Terraform modular refactor — codifying that network design as reusable modules, wiring Ansible to reach the private-subnet instance through EICE, and moving Terraform state to a remote, locked S3 backend (Current)
 
-That progression is intentional and shows how I approach systems: start simple, automate repeated work, add operational visibility, then harden and codify the network once the basics are proven — and finally close the loop so automation actually reaches the hardened environment.
+That progression is intentional and shows how I approach systems: start simple, automate repeated work, add operational visibility, then harden and codify the network once the basics are proven, close the loop so automation actually reaches the hardened environment — and finally make the tooling itself (Terraform state) safe to collaborate on.
 
 ---
 
@@ -94,19 +95,22 @@ Full write-up: [05 — Manual Network Re-Architecture](docs/5-manual-network-rea
 
 ---
 
-### Phase 6: Terraform Modular Refactor + EICE-Wired Ansible (Current)
+### Phase 6: Terraform Modular Refactor + EICE-Wired Ansible + Remote State (Current)
 The network design proven manually in Phase 5 is now codified as reusable Terraform modules — `vpc`, `security_groups`, and `compute` — so the same zero-exposure topology can be destroyed and rebuilt from code instead of AWS Console clicks.
 
 ```text
 terraform-modular/
 ├── modules/vpc              # custom VPC, public/private subnets, IGW, NAT gateway
 ├── modules/security_groups   # alb_sg -> app_sg <- eice_sg
-└── modules/compute           # EC2 instance, ALB, target group, listener, EICE
+├── modules/compute           # EC2 instance, ALB, target group, listener, EICE
+└── providers.tf              # AWS provider + S3/DynamoDB remote state backend
 ```
 
 Terraform outputs the instance's private IP and the ALB's DNS name — the instance itself has no public IP.
 
 Since the instance has no reachable IP at all from the operator's machine, Ansible automation for this layout is wired differently than the earlier public-IP phases: Terraform generates an inventory keyed on **instance ID** rather than IP, and `ansible.cfg` opens an EC2 Instance Connect Endpoint tunnel automatically on every connection via a `ProxyCommand`. This closes the loop between the hardened network and configuration management — Ansible now reaches the private-subnet instance with no manual tunneling step.
+
+This phase also moved `terraform-modular/`'s own state off the local disk into a remote, locked S3 + DynamoDB backend. The legacy `terraform/` folder is left on local state intentionally, as it's a simple, self-contained reference rather than active infrastructure.
 
 Full write-up: [06 — Terraform Modular Refactor](docs/6-terraform-modular.md)
 
@@ -120,6 +124,7 @@ Full write-up: [06 — Terraform Modular Refactor](docs/6-terraform-modular.md)
 - Monitoring stack with Node Exporter, Prometheus, and Grafana
 - A manually-designed, then Terraform-codified, zero-exposure network: private compute, public ALB, EC2 Instance Connect Endpoint for access
 - An instance-ID-based, EICE-tunneled Ansible inventory so automation reaches the private-subnet instance with no manual steps
+- A remote, locked Terraform state backend (S3 + DynamoDB) for the current infrastructure
 - Documentation and proof artifacts for each stage of the project
 
 ---
@@ -131,8 +136,8 @@ aws-devops-webops-lab/
 ├── ansible-project/     # playbooks, roles, sample inventory, screenshots
 ├── docs/                # phase-by-phase documentation
 ├── monitoring/          # monitoring config and notes
-├── terraform/           # Terraform import workflow (Phase 4, public-IP layout)
-├── terraform-modular/   # Terraform modules for the private-subnet network (Phase 6)
+├── terraform/           # Terraform import workflow (Phase 4, public-IP layout, local state)
+├── terraform-modular/   # Terraform modules for the private-subnet network (Phase 6, remote state)
 ├── screenshots/         # deployment and architecture proof
 └── README.md
 ```
@@ -149,13 +154,13 @@ Manual setup
   -> Monitoring
   -> Terraform import for existing infrastructure
   -> Manual zero-exposure network re-architecture (Phase 5)
-  -> Terraform modular refactor + EICE-wired Ansible (Phase 6, Current)
+  -> Terraform modular refactor + EICE-wired Ansible + remote state (Phase 6, Current)
 ```
 
 ### Legacy execution flow (public-IP layout, Phases 1–4)
 
 ```text
-Terraform (terraform/)
+Terraform (terraform/, local state)
   -> generated Ansible inventory (public IP)
   -> Ansible Nginx deployment
   -> Ansible monitoring deployment
@@ -170,7 +175,7 @@ Terraform (terraform/)
 ### Current execution flow (private-subnet layout, Phase 6)
 
 ```text
-Terraform (terraform-modular/)
+Terraform (terraform-modular/, S3 + DynamoDB remote state)
   -> generated Ansible inventory (instance ID, not IP)
   -> ansible.cfg ProxyCommand opens EICE tunnel automatically
   -> Ansible Nginx deployment
@@ -178,6 +183,7 @@ Terraform (terraform-modular/)
   -> validation via ALB (web) and EICE (admin)
 ```
 
+- Terraform state for this folder is stored in S3 and locked via DynamoDB, not kept locally
 - Terraform generates `ansible-project/inventory.ini`, keyed on instance ID
 - `ansible.cfg`'s `ProxyCommand` sends a temporary SSH key and opens the EICE tunnel per connection — no manual tunnel required
 - Ansible deploys Nginx and the monitoring stack exactly as in the legacy flow, just reached through EICE instead of a direct IP
@@ -217,11 +223,11 @@ ansible-playbook -i ansible-project/inventory.generated.ini ansible-project/moni
 
 `inventory.generated.ini` is machine-generated by Terraform and ignored by git.
 
-### Modular network flow (Phase 6, private subnet + EICE)
+### Modular network flow (Phase 6, private subnet + EICE + remote state)
 
 ```bash
 cd terraform-modular
-terraform init
+terraform init    # connects to the S3 backend automatically via providers.tf
 terraform plan
 terraform apply
 terraform output load_balancer_url
@@ -231,7 +237,7 @@ ansible-playbook -i inventory.ini playbook.yml
 ansible-playbook -i inventory.ini monitoring.yml
 ```
 
-Ansible reaches this layout automatically through the EC2 Instance Connect Endpoint — see [06 — Terraform Modular Refactor](docs/6-terraform-modular.md) for how the instance-ID inventory and `ProxyCommand` tunnel work together.
+Ansible reaches this layout automatically through the EC2 Instance Connect Endpoint, and Terraform state for this folder lives remotely in S3 with DynamoDB locking — see [06 — Terraform Modular Refactor](docs/6-terraform-modular.md) for how the instance-ID inventory, `ProxyCommand` tunnel, and remote state backend all fit together.
 
 ---
 
@@ -276,6 +282,7 @@ This targets view is also from the earlier two-instance phase, which is why it s
 - Connected Terraform and Ansible with generated inventory for smoother automation
 - Redesigned the network for zero public exposure on compute, then codified that design as reusable Terraform modules
 - Closed the loop by wiring Ansible to reach the hardened, private-subnet instance through an EC2 Instance Connect Endpoint, using an instance-ID-based inventory
+- Moved Terraform state for the current infrastructure into a remote, locked S3 + DynamoDB backend
 - Produced portfolio-ready documentation for both technical and non-technical readers
 
 ---
@@ -288,13 +295,13 @@ This targets view is also from the earlier two-instance phase, which is why it s
 - Compute tier: single Ubuntu EC2 instance running in a private subnet, provisioned by Terraform
 - Automation status: Ansible roles validated for Nginx and monitoring on both layouts; the private-subnet layout is reached automatically via an instance-ID inventory and an EICE `ProxyCommand` tunnel — no manual steps required
 - Terraform-assisted Ansible inventory generation exists for both the legacy public-IP layout and the current modular/private-subnet layout
-- Docker, CI/CD, and remote Terraform state are the next planned improvements
+- State management: `terraform-modular/` uses remote state in S3 with DynamoDB locking; `terraform/` (legacy Phase 4) intentionally remains on local state
+- Docker and CI/CD are the next planned improvements
 
 ---
 
 ## 🧭 Next Improvements
 
-- Remote Terraform state (S3 + DynamoDB locking) for both `terraform/` and `terraform-modular/`
 - CI checks with GitHub Actions (`terraform fmt`/`validate`, `ansible-lint`, playbook syntax checks)
 - Dockerized app or monitoring workflow
 - CD pipeline for automated deployments
