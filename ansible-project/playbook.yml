@@ -1,0 +1,58 @@
+---
+- name: Deploy Nginx in EC2
+  hosts: web-servers
+  become: yes
+  tasks:
+    - name: Install nginx for Debian
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+      notify: start nginx for Debian
+
+    - name: Install nginx for Redhat
+      yum:
+        name: nginx
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "RedHat"
+      notify: start nginx for RedHat
+
+    - name: Copy index file for Debian
+      copy:
+        src: ./index.html
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
+        force: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Copy index file for RedHat
+      copy:
+        src: ./index.html
+        dest: /usr/share/nginx/html/index.html
+        owner: root
+        group: root
+        mode: '0644'
+        force: yes
+      when: ansible_os_family == "RedHat"
+
+  handlers:
+    - name: start nginx for Debian
+      systemd: 
+        name: nginx
+        state: started
+        enabled: yes
+      when: ansible_os_family == "Debian" 
+
+    - name: start nginx for RedHat
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes
+      when: ansible_os_family == "RedHat"
+
+
+
