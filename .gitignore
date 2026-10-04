@@ -5,3 +5,4 @@ ansible-project/inventory.generated.ini
 terraform/.terraform/
 terraform/*.tfstate
 terraform/*.tfstate.backup
+terraform/main.tf.original
