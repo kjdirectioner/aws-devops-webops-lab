@@ -19,7 +19,7 @@
 - Launch the instance 
 ### 2.Connect via SSH
 ```bash 
-ssh -i ~/downloads/MY_Key.pem ubuntu@13.60.44.231 
+ssh -i ~/downloads/MY_Key.pem ubuntu@56.228.52.229
  ```
 ### 3. Update, Install & Start Nginx
 Run the following commands to install,start and enable Nginx:
