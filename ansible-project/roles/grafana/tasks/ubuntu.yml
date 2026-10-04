@@ -6,13 +6,17 @@
     state: present
     update_cache: yes
 
+- name: Ensure keyrings directory exists
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
 - name: Add Grafana GPG key
   get_url:
     url: https://apt.grafana.com/gpg.key
     dest: /etc/apt/keyrings/grafana.gpg
     mode: '0644'
-  args:
-    creates: /etc/apt/keyrings/grafana.gpg
 
 - name: Add Grafana repo
   apt_repository:
