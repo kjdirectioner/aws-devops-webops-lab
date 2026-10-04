@@ -13,6 +13,7 @@ This document explains the current Ansible workflow used in this project, includ
    -> 04 Terraform import setup
    -> 05 Manual network re-architecture
    -> 06 Terraform modular refactor
+   -> 07 Docker on cloud-init + containerised Nginx (proof of concept)
 ```
 
 This phase takes the manual Nginx work from Phase 1 and turns it into repeatable automation.

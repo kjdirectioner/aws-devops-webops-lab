@@ -5,6 +5,7 @@
 ![Ansible](https://img.shields.io/badge/Automation-Ansible-red?logo=ansible)
 ![Grafana](https://img.shields.io/badge/Monitoring-Grafana-blue?logo=grafana)
 ![Prometheus](https://img.shields.io/badge/Metrics-Prometheus-orange?logo=prometheus)
+![Docker](https://img.shields.io/badge/Container-Docker-2496ED?logo=docker)
 
 ## 🧩 Project Summary
 
@@ -38,6 +39,7 @@ This project reflects the kind of work involved in entry-level DevOps and cloud 
 - Ansible (including dynamic, instance-ID-based inventory and EICE-tunneled SSH)
 - Prometheus
 - Grafana
+- Docker (image builds, container lifecycle via Ansible `community.docker` modules, cloud-init bootstrapping via Terraform `user_data`)
 - Infrastructure as Code
 - Configuration Management
 - Monitoring and Observability
@@ -55,7 +57,8 @@ This project progressed in stages:
 3. Monitoring with Node Exporter, Prometheus, and Grafana
 4. Terraform import for existing AWS infrastructure, including generated Ansible inventory
 5. Manual zero-exposure network re-architecture: multi-subnet VPC, ALB, and EC2 Instance Connect Endpoint
-6. Terraform modular refactor — codifying that network design as reusable modules, wiring Ansible to reach the private-subnet instance through EICE, and moving Terraform state to a remote, locked S3 backend (Current)
+6. Terraform modular refactor — codifying that network design as reusable Terraform modules, wiring Ansible to reach the private-subnet instance through EICE, and moving Terraform state to a remote, locked S3 backend
+7. Docker on cloud-init + containerised Nginx — Docker daemon installed automatically at first boot via Terraform `user_data`; Nginx containerised and deployed through Ansible to validate the bootstrap and prove the container deployment path before the monitoring stack follows (Current)
 
 That progression is intentional and shows how I approach systems: start simple, automate repeated work, add operational visibility, then harden and codify the network once the basics are proven, close the loop so automation actually reaches the hardened environment — and finally make the tooling itself (Terraform state) safe to collaborate on.
 
@@ -95,7 +98,7 @@ Full write-up: [05 — Manual Network Re-Architecture](docs/5-manual-network-rea
 
 ---
 
-### Phase 6: Terraform Modular Refactor + EICE-Wired Ansible + Remote State (Current)
+### Phase 6: Terraform Modular Refactor + EICE-Wired Ansible + Remote State
 The network design proven manually in Phase 5 is now codified as reusable Terraform modules — `vpc`, `security_groups`, and `compute` — so the same zero-exposure topology can be destroyed and rebuilt from code instead of AWS Console clicks.
 
 ```text
@@ -116,6 +119,16 @@ Full write-up: [06 — Terraform Modular Refactor](docs/6-terraform-modular.md)
 
 ---
 
+### Phase 7: Docker on Cloud-Init + Containerised Nginx (Current)
+
+To cut deployment time and build toward CI/CD, Docker was introduced as the delivery mechanism for the app layer. The daemon is installed automatically at first boot via Terraform `user_data` (cloud-init) — no Ansible task or manual step is required. The same Nginx page from Phase 01 now runs as a Docker container built on the instance by Ansible's `docker_stack` role, validating that the cloud-init bootstrap is correct and that the container deployment path works end-to-end through the EICE tunnel and ALB.
+
+The monitoring stack (Node Exporter, Prometheus, Grafana) remains apt-installed for now. The next step is a Docker Compose file that replaces those three separate systemd services with a single, portable stack.
+
+Full write-up: [07 — Docker Containerisation](docs/7-docker-containerization.md)
+
+---
+
 ## 🛠️ What I Built
 
 - Manual Nginx hosting on AWS EC2
@@ -124,6 +137,7 @@ Full write-up: [06 — Terraform Modular Refactor](docs/6-terraform-modular.md)
 - Monitoring stack with Node Exporter, Prometheus, and Grafana
 - A manually-designed, then Terraform-codified, zero-exposure network: private compute, public ALB, EC2 Instance Connect Endpoint for access
 - An instance-ID-based, EICE-tunneled Ansible inventory so automation reaches the private-subnet instance with no manual steps
+- Docker daemon bootstrapped via Terraform cloud-init at first boot; Nginx containerised and deployed through Ansible as the first step toward a fully containerised, CI/CD-ready stack
 - A remote, locked Terraform state backend (S3 + DynamoDB) for the current infrastructure
 - Documentation and proof artifacts for each stage of the project
 
@@ -134,6 +148,7 @@ Full write-up: [06 — Terraform Modular Refactor](docs/6-terraform-modular.md)
 ```text
 aws-devops-webops-lab/
 ├── ansible-project/     # playbooks, roles, sample inventory, screenshots
+├── docker/              # Dockerfile and assets for the containerised Nginx app layer
 ├── docs/                # phase-by-phase documentation
 ├── monitoring/          # monitoring config and notes
 ├── terraform/           # Terraform import workflow (Phase 4, public-IP layout, local state)
@@ -154,7 +169,8 @@ Manual setup
   -> Monitoring
   -> Terraform import for existing infrastructure
   -> Manual zero-exposure network re-architecture (Phase 5)
-  -> Terraform modular refactor + EICE-wired Ansible + remote state (Phase 6, Current)
+  -> Terraform modular refactor + EICE-wired Ansible + remote state (Phase 6)
+  -> Docker on cloud-init + containerised Nginx (Phase 7, Current)
 ```
 
 ### Legacy execution flow (public-IP layout, Phases 1–4)
@@ -197,7 +213,7 @@ Detailed phase docs:
 - [04 — Terraform import setup](docs/4-terraform-setup.md)
 - [05 — Manual network re-architecture](docs/5-manual-network-rearchitecture.md)
 - [06 — Terraform modular refactor](docs/6-terraform-modular.md)
-
+- [07 — Docker Containerisation](docs/7-docker-containerization.md)
 ---
 
 ## ▶️ Quick Run
@@ -238,6 +254,15 @@ ansible-playbook -i inventory.ini monitoring.yml
 ```
 
 Ansible reaches this layout automatically through the EC2 Instance Connect Endpoint, and Terraform state for this folder lives remotely in S3 with DynamoDB locking — see [06 — Terraform Modular Refactor](docs/6-terraform-modular.md) for how the instance-ID inventory, `ProxyCommand` tunnel, and remote state backend all fit together.
+
+### Docker-based app deployment (Phase 7, private subnet + EICE)
+
+```bash
+cd ansible-project
+ansible-playbook -i inventory.ini docker_deploy.yml
+```
+
+> Requires Docker daemon on the instance, installed automatically at boot by `terraform apply` via `install_docker.sh`. If the apt-installed Nginx service is already running, stop it first to avoid a port 80 conflict: `sudo systemctl stop nginx`.
 
 ---
 
@@ -296,12 +321,13 @@ This targets view is also from the earlier two-instance phase, which is why it s
 - Automation status: Ansible roles validated for Nginx and monitoring on both layouts; the private-subnet layout is reached automatically via an instance-ID inventory and an EICE `ProxyCommand` tunnel — no manual steps required
 - Terraform-assisted Ansible inventory generation exists for both the legacy public-IP layout and the current modular/private-subnet layout
 - State management: `terraform-modular/` uses remote state in S3 with DynamoDB locking; `terraform/` (legacy Phase 4) intentionally remains on local state
-- Docker and CI/CD are the next planned improvements
+- Docker daemon is installed automatically on the instance at first boot via cloud-init; Nginx is containerised and deployable via `docker_deploy.yml`
+- Next: Docker Compose for the monitoring stack, then a CI/CD pipeline
 
 ---
 
 ## 🧭 Next Improvements
 
-- CI checks with GitHub Actions (`terraform fmt`/`validate`, `ansible-lint`, playbook syntax checks)
-- Dockerized app or monitoring workflow
-- CD pipeline for automated deployments
+- Docker Compose for the monitoring stack — replace individually apt-installed Node Exporter, Prometheus, and Grafana with a single `docker-compose.yml`
+- CI pipeline with GitHub Actions — `terraform fmt`/`validate`, `ansible-lint`, and `docker build` checks on every push
+- CD pipeline for automated deployments once the full stack is containerised

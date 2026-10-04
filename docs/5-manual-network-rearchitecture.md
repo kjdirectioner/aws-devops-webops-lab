@@ -13,6 +13,7 @@ This document explains the network redesign that moved the project from a single
    -> 04 Terraform import setup
    -> 05 Manual network re-architecture  ← you are here
    -> 06 Terraform modular refactor
+   -> 07 Docker on cloud-init + containerised Nginx (proof of concept)
 ```
 
 Previous: [04 — Terraform Import Setup](./4-terraform-setup.md)

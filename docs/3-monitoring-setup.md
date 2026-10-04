@@ -13,6 +13,7 @@ This document explains the current monitoring workflow used in the project on a 
    -> 04 Terraform import setup
    -> 05 Manual network re-architecture
    -> 06 Terraform modular refactor
+   -> 07 Docker on cloud-init + containerised Nginx (proof of concept)
 ```
 
 This phase adds visibility after the web server and automation workflow are working.

@@ -12,7 +12,8 @@ This document explains how the manually-built network from Phase 05 was rebuilt 
    -> 03 Monitoring setup
    -> 04 Terraform import setup
    -> 05 Manual network re-architecture
-   -> 06 Terraform modular refactor  ← you are here
+   -> 06 Terraform modular refactor  
+   -> 07 Docker on cloud-init + containerised Nginx (proof of concept)
 ```
 
 Previous: [05 — Manual Network Re-Architecture](./5-manual-network-rearchitecture.md)
@@ -196,7 +197,7 @@ now deploys Nginx and the monitoring stack onto the private-subnet instance end-
 - The original Phase 04 `terraform/` folder is left in place as the import-based, single-instance reference; `terraform-modular/` is the current version of the infrastructure.
 - Remote Terraform state (S3 + DynamoDB locking) is now configured for `terraform-modular/` — see the "Remote State" section above. `terraform/` (Phase 04) intentionally remains on local state, since it's a legacy reference and not the active infrastructure.
 - The S3 bucket and DynamoDB table backing remote state were provisioned manually, outside of Terraform — see "Bootstrap" above for why.
-- CI checks (`terraform validate`, `ansible-lint`, syntax checks) are not yet automated — see the main README's "Next Improvements."
+- CI checks (`terraform validate`, `ansible-lint`, `docker build`) are not yet automated — planned once both the app and monitoring layers are containerised.
 
 ## 🎯 Expected Outcome
 
@@ -212,7 +213,7 @@ now deploys Nginx and the monitoring stack onto the private-subnet instance end-
 
 ## 🧭 Next Step
 
-With the network layer codified, state managed remotely, and Ansible wired through EICE, the next planned improvements are Docker for the app layer and CI/CD for automated `terraform plan`/`apply` and playbook checks on change.
+With the network layer codified, state managed remotely, and Ansible wired through EICE, the next phase introduces Docker: the daemon is installed automatically at instance boot via Terraform `user_data`, and Nginx is containerised as a proof-of-concept for the faster, CI/CD-ready deployment pattern that follows.
 
 >📚 This file is part of the documentation series under /docs/
-Back to project overview: [Main README](../README.md)
+Next: [07 — Docker on Cloud-Init + Containerised Nginx](./7-docker-containerization.md) →
