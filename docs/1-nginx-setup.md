@@ -22,8 +22,8 @@ This project is divided into three key phases, each representing a progressive s
 nginx-aws-project/
 │
 ├── docs/
-│   ├── 01-nginx-setup.md           # Manual Nginx setup on AWS EC2 (this file)
-│   ├── 02-ansible-automation.md    # Automating multi-instance setup with Ansible
+│   ├── 1-nginx-setup.md           # Manual Nginx setup on AWS EC2 (this file)
+│   ├── 2-ansible-automation.md    # Automating multi-instance setup with Ansible
 │   └── 3-monitoring-setup.md       # Monitoring setup with Prometheus + Grafana
 
 ```        
@@ -103,8 +103,8 @@ Here are some extra screenshots showing the setup process and server status:
   ![Nginx Status](/screenshots/nginx-status.png)
 
 ## 🔁 Related Phases
-	•	02 — Ansible Automation Setup￼ (next step: automate EC2 + Nginx deployment)
-	•	03 — Monitoring Setup (Prometheus + Grafana)￼ (real-time monitoring of both EC2 instances)
+	•	2 — Ansible Automation Setup￼ (next step: automate EC2 + Nginx deployment)
+	•	3 — Monitoring Setup (Prometheus + Grafana)￼ (real-time monitoring of both EC2 instances)
 
 ---
 

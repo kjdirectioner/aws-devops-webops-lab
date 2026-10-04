@@ -5,7 +5,7 @@ This phase automates the **Nginx deployment** process across multiple EC2 instan
 ---
 
 ## 🧩 Overview
-Building upon [01 — Nginx Setup](./1-nginx-setup.md), this stage eliminates manual configuration steps and introduces **Infrastructure as Code (IaC)** principles using Ansible.
+Building upon [1 — Nginx Setup](./1-nginx-setup.md), this stage eliminates manual configuration steps and introduces **Infrastructure as Code (IaC)** principles using Ansible.
 
 It:
 - Installs Nginx on **Debian** and **Red Hat** EC2 instances
@@ -42,6 +42,6 @@ It:
 ---
 
 ## 🔗 Next Step
-Continue to [03 — Monitoring Setup (Prometheus + Grafana)](./3-monitoring-setup.md)
+Continue to [3 — Monitoring Setup (Prometheus + Grafana)](./3-monitoring-setup.md)
 
 > 📚 For detailed configuration, refer to [ansible-project/README.md](../ansible-project/README.md)
