@@ -1,6 +1,0 @@
----
-grafana_repo_key_url: https://apt.grafana.com/gpg.key
-grafana_repo_file: /etc/apt/sources.list.d/grafana.list
-
-grafana_package_name: grafana
-grafana_service_name: grafana-server

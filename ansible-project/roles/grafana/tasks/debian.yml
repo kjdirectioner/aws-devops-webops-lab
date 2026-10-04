@@ -1,32 +1,45 @@
 ---
-- name: Install required packages
+- name: Install Grafana prerequisites
   apt:
-    name: [apt-transport-https, software-properties-common, wget]
+    name:
+      - apt-transport-https
+      - software-properties-common
+      - wget
     state: present
     update_cache: yes
 
-- name: Add Grafana GPG key
-  apt_key:
-    url: "{{ grafana_repo_key_url }}"
-    state: present
+- name: Ensure keyrings directory exists
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Import Grafana GPG key
+  shell: |
+    wget -q -O - https://apt.grafana.com/gpg.key \
+      | gpg --dearmor \
+      | tee /etc/apt/keyrings/grafana.gpg > /dev/null
+  args:
+    creates: /etc/apt/keyrings/grafana.gpg
 
 - name: Add Grafana APT repository
   copy:
-    dest: "{{ grafana_repo_file }}"
-    content: "deb [signed-by=/etc/apt/trusted.gpg] https://apt.grafana.com stable main"
-    owner: root
-    group: root
+    dest: /etc/apt/sources.list.d/grafana.list
+    content: |
+      deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main
     mode: '0644'
-  notify: Reload systemd
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
 
 - name: Install Grafana
   apt:
-    name: "{{ grafana_package_name }}"
+    name: grafana
     state: present
-    update_cache: yes
 
-- name: Enable & start Grafana service
-  service:
-    name: "{{ grafana_service_name }}"
+- name: Enable and start Grafana
+  systemd:
+    name: grafana-server
     enabled: yes
     state: started
