@@ -1,0 +1,4 @@
+---
+- name: Include Debian-specific tasks
+  include_tasks: debian.yml
+  when: ansible_os_family == "Debian"
