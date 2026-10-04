@@ -5,6 +5,13 @@ resource "aws_instance" "web_server" {
   subnet_id              = var.private_subnet_ids[0] # Drops it cleanly into Private Subnet 1
   vpc_security_group_ids = [var.app_sg_id]           # Attaches the chained firewall
   key_name               = aws_key_pair.deployer.key_name
+ 
+  # Inject the bash script into the boot process
+  user_data = file("${path.module}/install_docker.sh")
+
+  # Force Terraform to recreate the instance if you ever modify the script
+  user_data_replace_on_change = true
+  
   tags = {
     Name = "Nginx-Private-Server"
   }
