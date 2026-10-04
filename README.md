@@ -51,26 +51,41 @@ This project progressed in stages:
 3. Monitoring with Node Exporter, Prometheus, and Grafana
 4. Terraform import for existing AWS infrastructure
 5. Terraform-generated inventory for a smoother Terraform-to-Ansible workflow
+6. Re-architecting for production: Zero-exposure manual multi-subnet topology (Current)
 
 That progression is intentional and shows how I approach systems: start simple, automate repeated work, and then add operational visibility.
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture Evolution
+
+### Phases 1–5: Baseline Single-Instance Infrastructure
+Initially, the project was deployed on a single public-facing Ubuntu EC2 instance running Nginx alongside a local Prometheus and Grafana monitoring stack. While functional for a sandbox, exposing all services on a public subnet introduced severe production security risks.
 
 ```text
-Ubuntu EC2
-  - Nginx
-  - Node Exporter
-  - Prometheus
-  - Grafana
-```
+Ubuntu EC2 (Public Subnet)
+  ├── Nginx (Port 80)
+  ├── Node Exporter (Port 9100)
+  ├── Prometheus (Port 9090)
+  └── Grafana (Port 3000)
+  ```
 
 Prometheus scrapes local host metrics, and Grafana visualizes service and system health.
 
 ![Grafana dashboard overview](monitoring/grafana/screenshots/grafana-dashboard-overview.png)
 
 ---
+
+### Phase 6: Production-Grade Zero-Exposure Network Topology (Current)
+To eliminate public exposure, I manually re-architected the entire cloud network layout to enforce strict tier isolation. 
+
+![Phase 6 Architecture Diagram](screenshots/phase6-architecture.png)
+
+#### 🔄 Core Routing Dynamics:
+1. **Inbound Traffic Plane:** Deployed public subnets across two distinct Availability Zones (`us-east-1a` and `us-east-1b`) to fulfill the infrastructure pre-requisites of an AWS Application Load Balancer (ALB). The ALB serves as the strict, single ingress point for internet traffic on port 80/443 and routes down to the hidden backend.
+2. **Compute Isolation:** Moved the Nginx web server and monitoring instances entirely into a secure Private Subnet with zero public IP footprint. 
+3. **Independent Outbound Path (Path 3):** Note on the diagram: The outbound package update route (Path 3) resolves from the private EC2 instance directly through the NAT Gateway in our public subnet, completely bypassing the inbound EICE management tunnel!
+4. **Zero-Exposure Management Plane:** Public SSH (Port 22) is completely closed to the internet. Administrative traffic from my local machine tunnels securely through an AWS EC2 Instance Connect Endpoint (EICE) inside the public subnet.
 
 ## 🛠️ What I Built
 
@@ -105,6 +120,7 @@ Manual setup
   -> Ansible automation
   -> Monitoring
   -> Terraform import for existing infrastructure
+  -> Manual Multi-Tier Re-Architecture (Phase 6)
 ```
 
 Current execution flow:
@@ -200,9 +216,11 @@ This targets view is also from the earlier two-instance phase, which is why it s
 
 ## 📌 Current State
 
-- Single Ubuntu EC2 instance
 - Nginx deployment automated with Ansible
 - Monitoring stack running on the same host
+- Network Tier: Multi-subnet VPC with Public/Private isolation, ALB ingress, NAT Gateway egress, and EICE management.
+- Compute Tier: Single Ubuntu EC2 instance running in a private subnet (manual layout).
+- Automation Status: Ansible roles validated for Nginx and local monitoring; current focus is translating this manual network architecture into modular Terraform blocks next week.
 - Terraform-assisted Ansible inventory generation
 - Docker and CI/CD planned as the next improvements
 
@@ -213,4 +231,7 @@ This targets view is also from the earlier two-instance phase, which is why it s
 - Dockerized app or monitoring workflow
 - CI checks with GitHub Actions
 - CD pipeline for automated deployments
-- Security hardening for SSH and monitoring exposure
+
+
+
+
