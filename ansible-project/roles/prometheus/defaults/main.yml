@@ -1,0 +1,27 @@
+---
+# roles/prometheus/defaults/main.yml
+
+prometheus_user: prometheus
+
+# Paths (package installs normally use these; keep them consistent)
+prometheus_config_dir: /etc/prometheus
+prometheus_config_file: "{{ prometheus_config_dir }}/prometheus.yml"
+prometheus_storage_path: /var/lib/prometheus
+prometheus_service_name: prometheus
+
+# Prometheus scrape settings (templating will reference these)
+prometheus_scrape_interval: "10s"
+
+# Targets to scrape (this should be a list so it's easy to append from playbook)
+# Example defaults: prometheus itself + node_exporter instances
+prometheus_node_exporter_targets:
+  - "localhost:9100"
+  - "10.0.134.125:9100"
+
+prometheus_version: "3.7.3"
+prometheus_os: "linux" 
+prometheus_arch: "amd64"
+prometheus_binary_url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.{{ prometheus_os }}-{{ prometheus_arch }}.tar.gz"
+prometheus_tmp_dir: /tmp
+prometheus_install_dir: /usr/local/bin
+prometheus_service_path: /etc/systemd/system/prometheus.service

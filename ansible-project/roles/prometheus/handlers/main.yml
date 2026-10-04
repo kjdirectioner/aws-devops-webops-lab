@@ -1,0 +1,11 @@
+# roles/prometheus/handlers/main.yml
+---
+- name: Reload systemd
+  command: systemctl daemon-reload
+  become: true
+
+- name: Restart prometheus
+  service:
+    name: "{{ prometheus_service_name }}"
+    state: restarted
+  become: true

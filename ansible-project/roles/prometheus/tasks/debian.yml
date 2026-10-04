@@ -1,0 +1,88 @@
+---
+- name: Download Prometheus tarball
+  get_url:
+    url: "{{ prometheus_binary_url }}"
+    dest: "{{ prometheus_tmp_dir }}/prometheus-{{ prometheus_version }}.{{ prometheus_os }}-{{ prometheus_arch }}.tar.gz"
+    mode: "0644"
+  
+- name: Extract tarball file
+  unarchive:
+    src: "{{ prometheus_tmp_dir }}/prometheus-{{ prometheus_version }}.{{ prometheus_os }}-{{ prometheus_arch }}.tar.gz"
+    dest: "{{ prometheus_tmp_dir }}"
+    remote_src: yes
+
+- name: Create Prometheus user
+  user:  
+    name: "{{ prometheus_user }}"
+    system: yes
+    shell: /usr/sbin/nologin
+    create_home: no 
+
+- name: Create storage directory
+  file:
+    path: "{{ prometheus_storage_path }}"
+    state: directory
+  
+- name: Create Prometheus config directory
+  file:
+    path: "{{ prometheus_config_dir }}"
+    state: directory
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_user }}"
+    mode: "0755"
+
+- name: Check if config exists
+  stat:
+    path: "{{ prometheus_config_file }}"
+  register: prometheus_config
+
+- name: Backup existing config if present
+  copy: 
+    src: "{{ prometheus_config_file }}"
+    dest: "{{ prometheus_config_file }}.bak"
+    remote_src: yes   
+  when: prometheus_config.stat.exists
+
+- name: Move the binary files 
+  copy: 
+    src: "{{ prometheus_tmp_dir }}/prometheus-{{ prometheus_version }}.{{ prometheus_os }}-{{ prometheus_arch }}/{{ item }}"
+    dest: "{{ prometheus_install_dir }}/{{ item }}"
+    owner: root
+    group: root
+    mode: '0755'
+    remote_src: yes
+    force: yes
+  loop: 
+    - prometheus
+    - promtool
+
+- name: Deploy Config template 
+  template:
+    src: prometheus.yml.j2
+    dest: "{{ prometheus_config_file }}"
+    owner: "{{ prometheus_user }}"
+    mode: "0644"
+
+- name: Deploy systemd service file
+  template:
+    src: prometheus.service.j2
+    dest: "{{ prometheus_service_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: 
+    - Reload systemd 
+    - Restart prometheus
+
+- name: Cleanup tarball
+  file:
+    path: "{{ prometheus_tmp_dir }}/prometheus-{{ prometheus_version }}.{{ prometheus_os }}-{{ prometheus_arch }}.tar.gz"
+    state: absent
+
+- name: Cleanup extracted Prometheus directory
+  file:
+    path: "{{ prometheus_tmp_dir }}/prometheus-{{ prometheus_version }}.{{ prometheus_os }}-{{ prometheus_arch }}"
+    state: absent
+
+
+    

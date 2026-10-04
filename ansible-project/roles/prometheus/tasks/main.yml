@@ -1,0 +1,3 @@
+# roles/prometheus/tasks/main.yml
+- include_tasks: Debian.yml
+  when: ansible_os_family == "Debian"

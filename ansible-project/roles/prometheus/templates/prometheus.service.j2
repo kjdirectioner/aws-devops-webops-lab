@@ -1,0 +1,14 @@
+[Unit]
+Description=Prometheus Monitoring
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User={{ prometheus_user }}
+ExecStart={{ prometheus_install_dir }}/prometheus \
+  --config.file={{ prometheus_config_file }} \
+  --storage.tsdb.path={{ prometheus_storage_path }}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
