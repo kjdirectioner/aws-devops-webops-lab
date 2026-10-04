@@ -1,0 +1,60 @@
+---
+- name: Download Node Exporter 
+  get_url:
+    url: "{{ node_exporter_download_url }}"
+    dest: "{{ node_exporter_tmp_dir }}/node_exporter-{{ node_exporter_version }}.{{ node_exporter_os }}-{{ node_exporter_arch }}.tar.gz"
+    mode: '0644'
+
+- name: Extract Node Exporter binary
+  unarchive:
+    src: "{{ node_exporter_tmp_dir }}/node_exporter-{{ node_exporter_version }}.{{ node_exporter_os }}-{{ node_exporter_arch }}.tar.gz"
+    dest: "{{ node_exporter_tmp_dir }}"
+    remote_src: yes
+
+- name: Move Node Exporter binary to install directory
+  copy:
+    src: "{{ node_exporter_tmp_dir }}/node_exporter-{{ node_exporter_version }}.{{ node_exporter_os }}-{{ node_exporter_arch }}/node_exporter" 
+    dest: "{{ node_exporter_install_dir }}/node_exporter" 
+    owner: root
+    group: root
+    mode: '0755'
+    force: yes
+    remote_src: yes
+
+- name: Create Node Exporter system user
+  user:
+    name: "{{ node_exporter_user }}"
+    system: yes
+    shell: /usr/sbin/nologin
+    create_home: no
+
+- name: Deploy the system service file 
+  template: 
+    src: node_exporter.service.j2
+    dest: "{{ node_exporter_service_path }}"
+    owner: root 
+    group: root 
+    mode: '0644'
+  notify: 
+    - Reload systemd 
+    - Restart node_exporter
+
+- name: Start and enable Node Exporter
+  service: 
+    name: "{{ node_exporter_service_name }}"
+    enabled: yes
+    state: started
+
+- name: Verify Node Exporter binary
+  stat:
+    path: "{{ node_exporter_install_dir }}/node_exporter"
+  register: node_exporter_binary
+- debug:
+    msg: "Node Exporter binary successfully deployed to {{ node_exporter_install_dir }}"
+  when: node_exporter_binary.stat.exists
+
+- name: Cleanup Node Exporter temp files
+  file:
+    path: "{{ node_exporter_tmp_dir }}/node_exporter-{{ node_exporter_version }}.{{ node_exporter_os }}-{{ node_exporter_arch }}"
+    state: absent
+  

@@ -1,0 +1,9 @@
+# roles/node_exporter/tasks/main.yml
+---
+- name: Include Debian-specific tasks
+  include_tasks: Debian.yml
+  when: ansible_os_family == "Debian"
+
+- name: Include RedHat-specific tasks
+  include_tasks: Redhat.yml
+  when: ansible_os_family == "RedHat"

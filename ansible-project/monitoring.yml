@@ -1,0 +1,6 @@
+---
+- name: Deploy Monitoring tools
+  hosts: all
+  become: true
+  roles: 
+    - node_exporter

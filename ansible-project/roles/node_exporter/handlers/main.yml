@@ -1,0 +1,11 @@
+# roles/node_exporter/handlers/main.yml
+---
+- name: Reload systemd
+  command: systemctl daemon-reload
+  become: true
+
+- name: Restart node_exporter
+  service:
+    name: "{{ node_exporter_service_name }}"
+    state: restarted
+  become: true
