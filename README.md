@@ -325,13 +325,10 @@ This targets view is also from the earlier two-instance phase, which is why it s
 - State management: `terraform-modular/` uses remote state in S3 with DynamoDB locking; `terraform/` (legacy Phase 4) intentionally remains on local state
 - Docker daemon is installed automatically on the instance at first boot via cloud-init; Nginx and monitoring services are defined in a Compose project and deployable through Ansible
 - The Compose role includes checks for local web, Prometheus, and Grafana endpoints after startup
-- Compose deployment is defined in Ansible; validate the stack and Prometheus targets on the EC2 instance
 
 ---
 
 ## 🧭 Next Improvements
 
-- Confirm the Compose deployment and monitoring targets on the current EC2 instance
-- Add a small Grafana dashboard and document safe access to monitoring endpoints
 - CI pipeline with GitHub Actions — `terraform fmt`/`validate`, `ansible-lint`, and `docker build` checks on every push
 - CD pipeline for automated deployments once the full stack is containerised
