@@ -1,0 +1,50 @@
+---
+- name: Ensure Docker Compose plugin is installed
+  ansible.builtin.apt:
+    name: docker-compose-plugin
+    state: present
+    update_cache: yes
+
+- name: Ensure Docker service is running
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Create project directory on EC2
+  ansible.builtin.file:
+    path: /opt/webops-stack
+    state: directory
+    mode: "0755"
+
+- name: Copy docker files to EC2
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../docker/"
+    dest: /opt/webops-stack/
+    mode: "0644"
+
+- name: Start Nginx and monitoring containers
+  community.docker.docker_compose_v2:
+    project_src: /opt/webops-stack
+    state: present
+
+- name: Check Nginx is serving on port 80
+  ansible.builtin.uri:
+    url: http://localhost:80
+    status_code: 200
+  retries: 5
+  delay: 3
+
+- name: Check Prometheus is healthy on port 9090
+  ansible.builtin.uri:
+    url: http://localhost:9090/-/healthy
+    status_code: 200
+  retries: 10
+  delay: 3
+
+- name: Check Grafana is healthy on port 3000
+  ansible.builtin.uri:
+    url: http://localhost:3000/api/health
+    status_code: 200
+  retries: 10
+  delay: 3

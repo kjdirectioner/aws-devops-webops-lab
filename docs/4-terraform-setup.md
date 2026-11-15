@@ -13,7 +13,7 @@ This document explains how Terraform was added after the infrastructure already 
    -> 04 Terraform import setup  ← you are here
    -> 05 Manual network re-architecture
    -> 06 Terraform modular refactor
-   -> 07 Docker on cloud-init + containerised Nginx (proof of concept)
+   -> 07 Docker on cloud-init + Compose web and monitoring stack
 ```
 
 This phase connects the already-running AWS infrastructure back into code and generates inventory for Ansible.

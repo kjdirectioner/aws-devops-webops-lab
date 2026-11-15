@@ -13,7 +13,7 @@ This document explains how the manually-built network from Phase 05 was rebuilt 
    -> 04 Terraform import setup
    -> 05 Manual network re-architecture
    -> 06 Terraform modular refactor  
-   -> 07 Docker on cloud-init + containerised Nginx (proof of concept)
+   -> 07 Docker on cloud-init + Compose web and monitoring stack
 ```
 
 Previous: [05 — Manual Network Re-Architecture](./5-manual-network-rearchitecture.md)
@@ -213,7 +213,7 @@ now deploys Nginx and the monitoring stack onto the private-subnet instance end-
 
 ## 🧭 Next Step
 
-With the network layer codified, state managed remotely, and Ansible wired through EICE, the next phase introduces Docker: the daemon is installed automatically at instance boot via Terraform `user_data`, and Nginx is containerised as a proof-of-concept for the faster, CI/CD-ready deployment pattern that follows.
+With the network layer codified, state managed remotely, and Ansible wired through EICE, the next phase bootstraps Docker through Terraform `user_data`. Nginx is containerised first, followed by a Compose deployment for the web and monitoring services.
 
 >📚 This file is part of the documentation series under /docs/
-Next: [07 — Docker on Cloud-Init + Containerised Nginx](./7-docker-containerization.md) →
+Next: [07 — Docker on Cloud-Init + Compose Web and Monitoring Stack](./7-docker-containerization.md) →

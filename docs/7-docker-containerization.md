@@ -1,6 +1,6 @@
-# 🐳 07 — Docker on Cloud-Init + Containerised Nginx (Proof of Concept)
+# 🐳 07 — Docker on Cloud-Init + Compose Web and Monitoring Stack
 
-This document explains why Docker was introduced at this stage, how the daemon gets onto the instance automatically via cloud-init, and what the containerised Nginx deployment proves — about the environment and about the deployment strategy going forward.
+This phase extends the Docker deployment from a single Nginx container to a Compose project for the web and monitoring services.
 
 ---
 
@@ -13,7 +13,7 @@ This document explains why Docker was introduced at this stage, how the daemon g
    -> 04 Terraform import setup
    -> 05 Manual network re-architecture
    -> 06 Terraform modular refactor
-   -> 07 Docker on cloud-init + containerised Nginx (proof of concept)  ← you are here
+   -> 07 Docker on cloud-init + Compose web and monitoring stack  ← you are here
 ```
 
 Previous: [06 — Terraform Modular Refactor](./6-terraform-modular.md)
@@ -32,12 +32,10 @@ Through Phase 06, every Ansible playbook run installs Nginx from apt on the targ
 
 The eventual goal is CI/CD — automated deploys on every push to main. A slow, apt-install-at-deploy-time playbook is a poor fit for that. Container images are built once and deploying one is just running a pre-built artefact — consistently fast and much lighter on external dependencies at deploy time.
 
-This phase does two targeted things as a proof of concept:
+This phase builds on that proof of concept:
 
 1. **Validates that cloud-init correctly bootstraps the Docker daemon** — Docker is installed on the instance automatically at first boot, via Terraform's `user_data`, so no Ansible task or manual step is needed to prepare the instance for containers.
-2. **Containerises Nginx as a test case** — the same static page from Phase 01 is now served from inside a Docker container built on the instance by Ansible, proving the daemon is correctly initialised and that Ansible can build and run images through it.
-
-This is not the end state. It is the foundation check before the next step: replacing the individually apt-installed monitoring components (Node Exporter, Prometheus, Grafana) with a single Docker Compose stack — one command to bring the whole observability layer up or tear it down.
+2. **Runs the web and monitoring services as a Compose project** — Nginx is built from the local Dockerfile, while Prometheus, Grafana, and Node Exporter use versioned images. Compose keeps their configuration and lifecycle together in one project directory.
 
 ---
 
@@ -77,21 +75,27 @@ By the time Ansible connects — after `terraform apply` completes and the insta
 | `terraform-modular/modules/compute/install_docker.sh` | Cloud-init script: installs Docker engine, adds `ubuntu` to the docker group, starts and enables the daemon |
 | `docker/nginx/Dockerfile` | Builds `custom-nginx` from `nginx:1.27-alpine` with `index.html` baked in at build time |
 | `docker/nginx/index.html` | The static page served by the container |
-| `docker/docker-compose.yml` | Local compose reference for manual build/run testing on a dev machine — not used by Ansible |
+| `docker/docker-compose.yml` | Defines the Nginx, Prometheus, Grafana, and Node Exporter services |
+| `docker/monitor/prometheus.yml` | Configures Prometheus to scrape itself and Node Exporter |
+| `docker/grafana/datasource/datasource.yml` | Provisions Prometheus as Grafana's default data source |
 | `ansible-project/docker_deploy.yml` | Playbook that applies the `docker_stack` role to the `web_servers` group |
 | `ansible-project/roles/docker_stack/tasks/main.yml` | Creates `/opt/nginx-docker`, copies the build context, builds `custom-nginx`, runs it as container `web-server` on port 80 |
+| `ansible-project/compose_deploy.yml` | Playbook that applies the Compose stack role |
+| `ansible-project/roles/docker_compose_stack/tasks/main.yml` | Installs the Compose plugin, copies the Compose project, starts it, and checks service endpoints |
 
 ---
 
-## 🚀 Run the Docker Playbook
+## 🚀 Deploy the Compose Stack
 
 Same inventory and connection path as every other playbook — the EICE tunnel is handled automatically by `ansible.cfg`:
 
 ```bash
-ansible-playbook -i ansible-project/inventory.ini ansible-project/docker_deploy.yml
+ansible-playbook -i ansible-project/inventory.ini ansible-project/compose_deploy.yml
 ```
 
-> **Port 80 conflict:** `playbook.yml` (apt Nginx) and `docker_deploy.yml` (containerised Nginx) both bind port 80. Do not run both against the same host. If switching from the apt path to the container path, stop the Nginx service on the instance first before running `docker_deploy.yml`:
+The role copies the full `docker/` directory to `/opt/webops-stack/`, then calls `community.docker.docker_compose_v2` with `state: present`. This brings up the services described by the Compose file. Docker Compose v2 must be available on the host, and the `community.docker` collection must be installed on the Ansible control machine.
+
+> **Existing services can conflict:** the apt Nginx and monitoring playbooks, and the standalone `docker_deploy.yml` path, may already occupy the ports used by Compose. Before the first Compose deployment, check the host and stop the old services or containers you no longer intend to use. Keep to one deployment path for these services on a host.
 > ```bash
 > sudo systemctl stop nginx
 > ```
@@ -100,12 +104,11 @@ ansible-playbook -i ansible-project/inventory.ini ansible-project/docker_deploy.
 
 ## ✅ Validation
 
-On the instance (via EICE):
+The Compose deployment role checks the local Nginx, Prometheus, and Grafana endpoints. You can inspect the project on the instance through EICE:
 
 ```bash
-systemctl status docker
-docker images        # should list custom-nginx
-docker ps            # should show web-server running, 0.0.0.0:80->80/tcp
+docker compose -f /opt/webops-stack/docker-compose.yml ps
+docker compose -f /opt/webops-stack/docker-compose.yml logs --tail=50
 ```
 
 Through the ALB — the load balancer only checks that port 80 is responding, so it is unaware of whether apt-installed Nginx or a container is answering:
@@ -114,25 +117,23 @@ Through the ALB — the load balancer only checks that port 80 is responding, so
 curl http://$(terraform -chdir=terraform-modular output -raw load_balancer_url)
 ```
 
-Expected result: the same custom Nginx page from Phase 01, now served from inside the container.
+Expected result: the Phase 01 page is served through the ALB by the Compose-managed Nginx service. Prometheus should report its own target and Node Exporter as healthy. Grafana's provisioned Prometheus data source points to `http://prometheus:9090` on the Compose network.
 
 ---
 
 ## 🧭 What This Proves
 
 - Cloud-init correctly bootstraps the Docker daemon before Ansible connects — no manual prep step and no race condition
-- Ansible's `community.docker` modules (`docker_image`, `docker_container`) work correctly against that daemon through the EICE tunnel
+- Ansible can copy the Compose project and manage it through the Docker Compose v2 module over the EICE connection
 - The container surfaces identically through the ALB — no changes to the network layer, security groups, or target group were needed
-- The build-once-run-fast container pattern is viable on this instance, and the bootstrap mechanism is solid enough to extend to the full stack
+- Prometheus and Grafana keep their application data in named Docker volumes
+- The project now has separate apt, standalone-container, and Compose deployment paths; only one path for a given service should be active on the instance
 
 ---
 
-## 🗺️ What's Next
+## 🧭 Next Step
 
-With the Docker daemon proven via cloud-init and the container deployment path validated, the next step is to extend this pattern to the whole stack:
-
-- **Docker Compose for the monitoring stack** — replace the individually apt-installed Node Exporter, Prometheus, and Grafana services with a single `docker-compose.yml`. One `docker compose up` to bring the full observability layer up; one `docker compose down` to tear it down cleanly. This also makes the monitoring config portable — it lives alongside the code rather than being scattered across systemd unit files.
-- **CI/CD pipeline** — once both the app and monitoring layers are containerised, a GitHub Actions workflow can run `terraform fmt`/`validate`, `ansible-lint`, and `docker build` checks on every push to main, and eventually automate the deploy itself.
+Next, validate the Compose services and Prometheus targets on the EC2 instance. Further improvements could include a Grafana dashboard and a documented private access path for the monitoring interfaces.
 
 ---
 

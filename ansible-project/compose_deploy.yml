@@ -1,0 +1,6 @@
+---
+- name: Deploy containerized Nginx and monitoring stack
+  hosts: web_servers
+  become: true
+  roles:
+    - docker_compose_stack

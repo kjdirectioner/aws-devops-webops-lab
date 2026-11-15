@@ -11,6 +11,7 @@ This folder shows the automation phase of the project: turning a manually config
 - Installs **Node Exporter** for host metrics
 - Deploys **Prometheus** and **Grafana** for monitoring
 - Builds a custom **Docker image** and runs Nginx as a container (container-based path, `docker_deploy.yml`)
+- Deploys Nginx, Prometheus, Grafana, and Node Exporter together with Docker Compose (`compose_deploy.yml`)
 - Supports both manual and Terraform-generated inventory, including the private-subnet layout
 
 ---
@@ -21,11 +22,13 @@ This folder shows the automation phase of the project: turning a manually config
 |------|---------|
 | `playbook.yml` | Deploys Nginx (apt) to the `web_servers` group |
 | `docker_deploy.yml` | Builds and runs containerised Nginx via the `docker_stack` role |
+| `compose_deploy.yml` | Deploys the web and monitoring Compose project to `web_servers` |
 | `monitoring.yml` | Deploys Node Exporter, Prometheus, and Grafana |
 | `inventory.example.ini` | Safe inventory template for manual runs |
 | `inventory.generated.ini` / `inventory.ini` | Terraform-generated inventory, ignored by git |
 | `roles/` | Ubuntu-focused Ansible roles |
 | `roles/docker_stack/` | Copies `docker/nginx/` to the instance, builds `custom-nginx`, runs it as container `web-server` on port 80 |
+| `roles/docker_compose_stack/` | Installs the Compose plugin, copies `docker/` to `/opt/webops-stack`, starts the Compose project, and checks local service endpoints |
 | `ansible.cfg` | SSH config, including the EICE `ProxyCommand` used for the private-subnet layout |
 
 ---
@@ -41,10 +44,10 @@ Manual EC2 setup
   -> Terraform import + generated inventory
   -> Manual network re-architecture (private subnet, ALB, EICE)
   -> Terraform modular refactor + EICE-based Ansible wiring
-  -> Docker daemon via cloud-init + containerised Nginx (proof of concept)
+  -> Docker on cloud-init + Ansible-managed Compose web and monitoring stack
 ```
 
-The goal is to show that the server can be rebuilt or updated consistently instead of configured by hand every time. The Docker path (`docker_deploy.yml`) exists to validate that the cloud-init Docker bootstrap works and to prove the container-based deployment pattern before the monitoring stack is moved to Docker Compose.
+The goal is to show that the server can be rebuilt or updated consistently instead of configured by hand every time. There are separate apt, standalone-container, and Compose deployment paths. Use only one path for a given service on the host because they can compete for the same ports.
 
 > **Current status:** the instance now runs in a private subnet behind an ALB, with no public IP (see [`terraform-modular/`](../terraform-modular/README.md)). Ansible reaches it through an EC2 Instance Connect Endpoint (EICE): the Terraform-generated inventory uses the **instance ID** as `ansible_host` (there is no IP to target), and `ansible.cfg`'s `ProxyCommand` opens an EICE tunnel keyed off that instance ID automatically on every connection. The older `inventory.example.ini` / public-IP workflow below still works unchanged for the legacy `terraform/` (Phase 4) layout.
 
@@ -79,7 +82,15 @@ Docker-based Nginx deployment (any layout — requires Docker daemon on the inst
 ansible-playbook -i inventory.ini docker_deploy.yml
 ```
 
-> **Port conflict:** `playbook.yml` and `docker_deploy.yml` both bind port 80. Run one or the other against the same host, not both. If switching from the apt path to the container path, stop the Nginx service on the instance first (`sudo systemctl stop nginx`).
+Compose deployment (Nginx, Prometheus, Grafana, Node Exporter):
+
+```bash
+ansible-playbook -i inventory.ini compose_deploy.yml
+```
+
+The Compose role copies the entire `docker/` project to `/opt/webops-stack`, ensures Docker and the Compose plugin are available, starts the project with `community.docker.docker_compose_v2`, and checks the web, Prometheus, and Grafana endpoints. The `community.docker` collection must be installed on the control machine.
+
+> **Port conflicts:** the apt, standalone-container, and Compose paths use overlapping ports (80, 9090, 3000, and 9100). Before first Compose deployment, check for old services or containers using these ports and stop the deployment path you are replacing.
 
 `ansible.cfg`'s `ProxyCommand` handles sending the temporary SSH public key and opening the EICE tunnel per host for the private-subnet layout — no manual tunnel setup needed before running any playbook.
 
