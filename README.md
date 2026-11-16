@@ -276,6 +276,7 @@ This copies `docker/` to `/opt/webops-stack` and starts the Nginx and monitoring
 | Ansible automation | [Playbook run](ansible-project/screenshots/Playbook_run.png) |
 | Monitoring | [Grafana dashboard](monitoring/grafana/screenshots/grafana-dashboard-overview.png), [Prometheus targets](monitoring/grafana/screenshots/prometheus-targets-up.png) |
 | Network re-architecture | [Architecture diagram](screenshots/phase6-architecture.png) |
+| Docker Compose deployment | [Ansible Compose deployment run](screenshots/compose-deployment.png) |
 
 ### Manual validation
 
@@ -298,6 +299,12 @@ Prometheus and Grafana confirm the instance is not only running, but observable:
 This targets view is also from the earlier two-instance phase, which is why it shows two targets. The current project now runs monitoring locally on a single Ubuntu host.
 
 ![Prometheus targets up](monitoring/grafana/screenshots/prometheus-targets-up.png)
+
+### Docker Compose deployment
+
+The Ansible playbook started the Compose stack and completed its local Nginx, Prometheus, and Grafana health checks. Prometheus and Grafana needed several retries before responding; the final play recap reports `failed=0` and `unreachable=0`.
+
+![Ansible Docker Compose deployment](screenshots/compose-deployment.png)
 
 ---
 
