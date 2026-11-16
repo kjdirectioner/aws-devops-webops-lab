@@ -1,0 +1,83 @@
+name: CI checks
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'terraform-modular/**'
+      - 'ansible-project/**'
+      - 'docker/**'
+      - '.github/workflows/ci.yml'
+      - '!**/README.md'
+      - '!**/screenshots/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'terraform-modular/**'
+      - 'ansible-project/**'
+      - 'docker/**'
+      - '.github/workflows/ci.yml'
+      - '!**/README.md'
+      - '!**/screenshots/**'
+
+jobs:
+  terrafrom:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform-modular
+    steps:
+      - name: Runner setup
+        uses: actions/checkout@v4
+
+      - name: Setup terraform
+        uses: hashicorp/setup-terraform@v3
+          
+      - name: terraform format checks
+        run: terraform fmt -check -recursive
+
+      - name: provider setup
+        run: terraform init -backend=false
+
+      - name: terraform validate 
+        run: terraform validate
+
+  ansible:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ansible-project
+    steps:
+      - name: Runner setup
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ansible and ansible-lint
+        run: |
+          pip install ansible ansible-lint
+          ansible-galaxy collection install community.docker
+
+      - name: Check playbook syntax
+        run: ansible-playbook compose_deploy.yml --syntax-check
+
+      - name: Run ansible-lint
+        run: ansible-lint
+
+  docker-compose-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docker
+    steps:
+      - name: Runner setup
+        uses: actions/checkout@v4
+
+      - name: Validate docker-compose syntax
+        run: docker compose config -q
+
+      - name: Build Docker images
+        run: docker compose build
