@@ -21,7 +21,7 @@ on:
       - '!**/screenshots/**'
 
 jobs:
-  terrafrom:
+  terraform:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -41,6 +41,8 @@ jobs:
 
       - name: terraform validate 
         run: terraform validate
+        env:
+          TF_VAR_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDummyKeyForCIValidationOnly ci@github"
 
   ansible:
     runs-on: ubuntu-latest

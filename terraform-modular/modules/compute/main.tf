@@ -18,7 +18,7 @@ resource "aws_instance" "web_server" {
 }
 resource "aws_key_pair" "deployer" {
   key_name   = "id_ansible"
-  public_key = file("~/.ssh/id_ansible.pub") # path to the public key
+  public_key = var.public_key
 }
 # 2. The Ingress Engine: Application Load Balancer
 resource "aws_lb" "external_alb" {

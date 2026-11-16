@@ -18,3 +18,7 @@ variable "instance_type" {
   description = "The instance sizing for the compute tier"
 }
 
+variable "public_key" {
+  description = "SSH public key for the EC2 deployer key pair"
+  type        = string
+}

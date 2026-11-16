@@ -18,9 +18,11 @@ prometheus_node_exporter_targets:
   - "localhost:9100"
 
 prometheus_version: "3.7.3"
-prometheus_os: "linux" 
+prometheus_os: "linux"
 prometheus_arch: "amd64"
-prometheus_binary_url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.{{ prometheus_os }}-{{ prometheus_arch }}.tar.gz"
+prometheus_binary_url: >-
+  {{ 'https://github.com/prometheus/prometheus/releases/download/v' ~ prometheus_version ~
+  '/prometheus-' ~ prometheus_version ~ '.' ~ prometheus_os ~ '-' ~ prometheus_arch ~ '.tar.gz' }}
 prometheus_tmp_dir: /tmp
 prometheus_install_dir: /usr/local/bin
 prometheus_service_path: /etc/systemd/system/prometheus.service

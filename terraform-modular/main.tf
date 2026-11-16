@@ -18,6 +18,7 @@ module "compute" {
   eice_sg_id         = module.security_groups.eice_sg_id
   ami                = var.ami
   instance_type      = var.instance_type
+  public_key         = var.public_key
 }
 
 resource "local_file" "ansible_inventory" {

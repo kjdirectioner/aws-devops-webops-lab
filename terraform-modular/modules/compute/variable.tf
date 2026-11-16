@@ -37,3 +37,8 @@ variable "instance_type" {
   type        = string
   description = "The computing power footprint allocation"
 }
+
+variable "public_key" {
+  description = "SSH public key for the EC2 deployer key pair"
+  type        = string
+}
