@@ -90,6 +90,10 @@ ansible-playbook -i inventory.ini compose_deploy.yml
 
 The Compose role copies the entire `docker/` project to `/opt/webops-stack`, ensures Docker and the Compose plugin are available, starts the project with `community.docker.docker_compose_v2`, and checks the web, Prometheus, and Grafana endpoints. The `community.docker` collection must be installed on the control machine.
 
+## Continuous Integration
+
+GitHub Actions syntax-checks `compose_deploy.yml` and runs `ansible-lint` when files under `ansible-project/` change. The workflow installs the `community.docker` collection first. These checks validate the Ansible configuration; they do not connect to or deploy to EC2.
+
 > **Port conflicts:** the apt, standalone-container, and Compose paths use overlapping ports (80, 9090, 3000, and 9100). Before first Compose deployment, check for old services or containers using these ports and stop the deployment path you are replacing.
 
 `ansible.cfg`'s `ProxyCommand` handles sending the temporary SSH public key and opening the EICE tunnel per host for the private-subnet layout — no manual tunnel setup needed before running any playbook.

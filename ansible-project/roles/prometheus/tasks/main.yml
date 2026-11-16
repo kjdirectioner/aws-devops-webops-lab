@@ -1,3 +1,5 @@
+---
 # roles/prometheus/tasks/main.yml
-- include_tasks: ubuntu.yml
+- name: Include Ubuntu Prometheus tasks
+  ansible.builtin.include_tasks: ubuntu.yml
   when: ansible_distribution == "Ubuntu"

@@ -1,25 +1,25 @@
 ---
 - name: Download Prometheus tarball
-  get_url:
+  ansible.builtin.get_url:
     url: "{{ prometheus_binary_url }}"
     dest: "{{ prometheus_tmp_dir }}/prometheus-{{ prometheus_version }}.{{ prometheus_os }}-{{ prometheus_arch }}.tar.gz"
     mode: "0644"
 
 - name: Extract tarball file
-  unarchive:
+  ansible.builtin.unarchive:
     src: "{{ prometheus_tmp_dir }}/prometheus-{{ prometheus_version }}.{{ prometheus_os }}-{{ prometheus_arch }}.tar.gz"
     dest: "{{ prometheus_tmp_dir }}"
-    remote_src: yes
+    remote_src: true
 
 - name: Create Prometheus user
-  user:
+  ansible.builtin.user:
     name: "{{ prometheus_user }}"
-    system: yes
+    system: true
     shell: /usr/sbin/nologin
-    create_home: no
+    create_home: false
 
 - name: Create storage directory
-  file:
+  ansible.builtin.file:
     path: "{{ prometheus_storage_path }}"
     state: directory
     owner: "{{ prometheus_user }}"
@@ -27,7 +27,7 @@
     mode: "0755"
 
 - name: Create Prometheus config directory
-  file:
+  ansible.builtin.file:
     path: "{{ prometheus_config_dir }}"
     state: directory
     owner: "{{ prometheus_user }}"
@@ -35,19 +35,19 @@
     mode: "0755"
 
 - name: Move the binary files
-  copy:
+  ansible.builtin.copy:
     src: "{{ prometheus_tmp_dir }}/prometheus-{{ prometheus_version }}.{{ prometheus_os }}-{{ prometheus_arch }}/{{ item }}"
     dest: "{{ prometheus_install_dir }}/{{ item }}"
     owner: root
     group: root
-    mode: '0755'
-    remote_src: yes
+    mode: "0755"
+    remote_src: true
   loop:
     - prometheus
     - promtool
 
 - name: Deploy Config template
-  template:
+  ansible.builtin.template:
     src: prometheus.yml.j2
     dest: "{{ prometheus_config_file }}"
     owner: "{{ prometheus_user }}"
@@ -55,31 +55,31 @@
     mode: "0644"
 
 - name: Deploy systemd service file
-  template:
+  ansible.builtin.template:
     src: prometheus.service.j2
     dest: "{{ prometheus_service_path }}"
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   notify:
     - Reload systemd
     - Restart prometheus
 
 - name: Flush handlers to avoid race condition
-  meta: flush_handlers
+  ansible.builtin.meta: flush_handlers
 
 - name: Enable and Ensure Prometheus service is started
-  systemd:
+  ansible.builtin.systemd:
     name: "{{ prometheus_service_name }}"
-    enabled: yes
+    enabled: true
     state: started
 
 - name: Cleanup tarball
-  file:
+  ansible.builtin.file:
     path: "{{ prometheus_tmp_dir }}/prometheus-{{ prometheus_version }}.{{ prometheus_os }}-{{ prometheus_arch }}.tar.gz"
     state: absent
 
 - name: Cleanup extracted Prometheus directory
-  file:
+  ansible.builtin.file:
     path: "{{ prometheus_tmp_dir }}/prometheus-{{ prometheus_version }}.{{ prometheus_os }}-{{ prometheus_arch }}"
     state: absent

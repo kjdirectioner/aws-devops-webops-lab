@@ -4,28 +4,26 @@
   become: true
   tasks:
     - name: Install Nginx on Ubuntu
-      apt:
+      ansible.builtin.apt:
         name: nginx
         state: present
-        update_cache: yes
+        update_cache: true
       when: ansible_distribution == "Ubuntu"
 
-
     - name: Copy index file for Ubuntu
-      copy:
+      ansible.builtin.copy:
         src: ./index.html
         dest: /var/www/html/index.html
         owner: www-data
         group: www-data
-        mode: '0644'
+        mode: "0644"
       when: ansible_distribution == "Ubuntu"
       tags: index
 
-
     - name: Ensure Nginx is running
-      systemd:
+      ansible.builtin.systemd:
         name: nginx
-        enabled: yes
+        enabled: true
         state: started
       when: ansible_distribution == "Ubuntu"
       tags: nginx

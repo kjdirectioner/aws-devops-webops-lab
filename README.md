@@ -143,6 +143,20 @@ Full write-up: [07 — Docker Containerisation](docs/7-docker-containerization.m
 
 ---
 
+## 🔄 Continuous Integration
+
+The workflow at `.github/workflows/ci.yml` runs on pushes to `main` and pull requests targeting `main` when files under `terraform-modular/`, `ansible-project/`, or `docker/` change, or when the workflow itself changes. README and screenshot-only changes are excluded.
+
+It runs three independent checks:
+
+- **Terraform:** checks formatting, initializes without the remote backend, and validates the modular configuration.
+- **Ansible:** syntax-checks the Compose deployment playbook and runs `ansible-lint` after installing the `community.docker` collection.
+- **Docker Compose:** validates the Compose configuration and builds the images defined by the project.
+
+These checks do not deploy infrastructure or run the stack on AWS.
+
+---
+
 ## 📁 Repository Structure
 
 ```text
@@ -150,6 +164,7 @@ aws-devops-webops-lab/
 ├── ansible-project/     # apt, standalone Docker, and Compose playbooks and roles
 ├── docker/              # Compose file, Nginx build context, Prometheus and Grafana config
 ├── docs/                # phase-by-phase documentation
+├── .github/workflows/   # GitHub Actions CI workflow
 ├── monitoring/          # monitoring config and notes
 ├── terraform/           # Terraform import workflow (Phase 4, public-IP layout, local state)
 ├── terraform-modular/   # Terraform modules for the private-subnet network (Phase 6, remote state)
@@ -337,5 +352,4 @@ The Ansible playbook started the Compose stack and completed its local Nginx, Pr
 
 ## 🧭 Next Improvements
 
-- CI pipeline with GitHub Actions — `terraform fmt`/`validate`, `ansible-lint`, and `docker build` checks on every push
-- CD pipeline for automated deployments once the full stack is containerised
+- Add a CD workflow for deployment after defining safe environment, credentials, and approval requirements

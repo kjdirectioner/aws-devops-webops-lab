@@ -3,13 +3,13 @@
   ansible.builtin.apt:
     name: docker-compose-plugin
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Ensure Docker service is running
   ansible.builtin.service:
     name: docker
     state: started
-    enabled: yes
+    enabled: true
 
 - name: Create project directory on EC2
   ansible.builtin.file:

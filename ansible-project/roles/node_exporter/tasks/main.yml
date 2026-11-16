@@ -1,5 +1,5 @@
 # roles/node_exporter/tasks/main.yml
 ---
 - name: Include Ubuntu-specific tasks
-  include_tasks: ubuntu.yml
+  ansible.builtin.include_tasks: ubuntu.yml
   when: ansible_distribution == "Ubuntu"

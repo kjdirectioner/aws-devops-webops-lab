@@ -1,36 +1,37 @@
+---
 - name: Install prerequisites
-  apt:
+  ansible.builtin.apt:
     name:
       - apt-transport-https
       - software-properties-common
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Ensure keyrings directory exists
-  file:
+  ansible.builtin.file:
     path: /etc/apt/keyrings
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 - name: Add Grafana GPG key
-  get_url:
+  ansible.builtin.get_url:
     url: https://apt.grafana.com/gpg.key
     dest: /etc/apt/keyrings/grafana.gpg
-    mode: '0644'
+    mode: "0644"
 
 - name: Add Grafana repo
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main"
     state: present
 
 - name: Install Grafana
-  apt:
+  ansible.builtin.apt:
     name: grafana
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Ensure Grafana is running
-  systemd:
+  ansible.builtin.systemd:
     name: grafana-server
-    enabled: yes
+    enabled: true
     state: started
