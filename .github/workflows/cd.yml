@@ -1,0 +1,42 @@
+name: Deploy Lab
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Runner setup
+        uses: actions/checkout@v4
+
+      - name: Log into AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-north-1
+
+      - name: Generate Ephemeral SSH Keypair & Set TF_VAR
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          ssh-keygen -t ed25519 -f ~/.ssh/id_ansible -N "" -q
+          echo "TF_VAR_public_key=$(cat ~/.ssh/id_ansible.pub)" >> $GITHUB_ENV
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Apply
+        working-directory: terraform-modular
+        run: |
+          terraform init
+          terraform apply -auto-approve
+
+      - name: Wait for EC2 & EICE Readiness
+        working-directory: ansible-project
+        run: ansible all -m wait_for_connection -a "timeout=180 sleep=10"
+
+      - name: Deploy Stack via Ansible
+        working-directory: ansible-project
+        run: ansible-playbook compose_deploy.yml
